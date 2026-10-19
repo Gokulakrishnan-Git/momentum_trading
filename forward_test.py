@@ -25,6 +25,7 @@ from strategy_engine import (
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "market_data"
+CACHE_DIR = ROOT / ".forward_market_cache"
 CONFIG_PATH = ROOT / "forward_test.json"
 STATE_PATH = ROOT / "forward_state.json"
 UNIVERSES = {
@@ -104,6 +105,14 @@ def load_market_history(universe: str) -> dict:
     cfg = UNIVERSES[universe]
     kinds = ("open", "high", "low", "close")
     frames = {kind: _read_frame(DATA_DIR / f"{universe}_{kind}.csv") for kind in kinds}
+    base_latest = {kind: frame.index.max() for kind, frame in frames.items() if not frame.empty}
+    for kind in kinds:
+        cache_path = CACHE_DIR / f"{universe}_{kind}.csv"
+        if cache_path.exists():
+            cached = _read_frame(cache_path)
+            if kind in base_latest:
+                cached = cached.loc[cached.index > base_latest[kind]]
+            frames[kind] = _merge(frames[kind], cached)
     tickers = frames["close"].columns.astype(str).tolist()
     if not tickers:
         raise RuntimeError(f"No saved tickers exist for {universe}.")
@@ -122,7 +131,15 @@ def load_market_history(universe: str) -> dict:
                 frames[kind] = _merge(frames[kind], fresh)
 
     benchmark_path = DATA_DIR / f"{universe}_index_close.csv"
-    benchmark_saved = _read_frame(benchmark_path).iloc[:, 0].astype(float)
+    benchmark_base = _read_frame(benchmark_path).iloc[:, 0].astype(float)
+    benchmark_saved = benchmark_base.copy()
+    benchmark_cache_path = CACHE_DIR / f"{universe}_benchmark.csv"
+    if benchmark_cache_path.exists():
+        benchmark_cache = _read_frame(benchmark_cache_path).iloc[:, 0].astype(float)
+        if not benchmark_base.empty:
+            benchmark_cache = benchmark_cache.loc[benchmark_cache.index > benchmark_base.index.max()]
+        benchmark_saved = pd.concat([benchmark_saved, benchmark_cache]).sort_index()
+        benchmark_saved = benchmark_saved.loc[~benchmark_saved.index.duplicated(keep="last")]
     bench_start = (benchmark_saved.index.max() + pd.Timedelta(days=1)).date()
     if bench_start <= local_today:
         index_bars = yf.download(tickers=[cfg["index"]], start=bench_start.isoformat(),
@@ -133,26 +150,70 @@ def load_market_history(universe: str) -> dict:
             benchmark_saved = pd.concat([benchmark_saved, fresh]).sort_index()
             benchmark_saved = benchmark_saved.loc[~benchmark_saved.index.duplicated(keep="last")]
 
+    CACHE_DIR.mkdir(exist_ok=True)
+    for kind, frame in frames.items():
+        if kind in base_latest:
+            fresh = frame.loc[frame.index > base_latest[kind]]
+        else:
+            fresh = frame
+        if not fresh.empty:
+            fresh.to_csv(CACHE_DIR / f"{universe}_{kind}.csv")
+    if not benchmark_saved.empty:
+        fresh_benchmark = benchmark_saved.loc[benchmark_saved.index > benchmark_base.index.max()] if not benchmark_base.empty else benchmark_saved
+        if not fresh_benchmark.empty:
+            fresh_benchmark.to_frame(name=benchmark_saved.name or cfg["index"]).to_csv(benchmark_cache_path)
+
     return {**frames, "benchmark": benchmark_saved, "tickers": tickers, "config": cfg,
             "today": pd.Timestamp(local_today)}
 
 
-def current_quotes(tickers: list[str], fallback: dict[str, float]) -> dict[str, float]:
+def _raw_field_frame(bars: pd.DataFrame, field: str, tickers: list[str]) -> pd.DataFrame:
+    """Extract an intraday field without collapsing its minute-level index."""
+    if isinstance(bars.columns, pd.MultiIndex):
+        if field in bars.columns.get_level_values(0):
+            result = bars[field]
+        else:
+            result = bars.xs(field, axis=1, level=1)
+    else:
+        result = bars[[field]].copy()
+        if len(tickers) == 1:
+            result.columns = tickers
+    if isinstance(result, pd.Series):
+        result = result.to_frame(name=tickers[0])
+    result.columns = result.columns.astype(str)
+    return result
+
+
+def current_quotes(tickers: list[str], fallback: dict[str, float]) -> tuple[dict[str, float], dict[str, float], dict[str, float]]:
     tickers = list(dict.fromkeys(tickers))
     result = dict(fallback)
     if not tickers:
-        return result
+        return result, {}, {}
     bars = yf.download(tickers=tickers, period="1d", interval="1m", auto_adjust=True,
                        prepost=False, progress=False, threads=True, group_by="column")
     if bars is None or bars.empty:
-        return result
-    close = _field_frame(bars, "Close", tickers)
+        return result, {}, {}
+    try:
+        close = _raw_field_frame(bars, "Close", tickers)
+        high = _raw_field_frame(bars, "High", tickers)
+        low = _raw_field_frame(bars, "Low", tickers)
+    except (KeyError, ValueError):
+        return result, {}, {}
+    intraday_highs, intraday_lows = {}, {}
     for ticker in tickers:
         if ticker in close:
             values = close[ticker].dropna()
             if not values.empty and float(values.iloc[-1]) > 0:
                 result[ticker] = float(values.iloc[-1])
-    return result
+        if ticker in high:
+            values = high[ticker].dropna()
+            if not values.empty:
+                intraday_highs[ticker] = float(values.max())
+        if ticker in low:
+            values = low[ticker].dropna()
+            if not values.empty:
+                intraday_lows[ticker] = float(values.min())
+    return result, intraday_highs, intraday_lows
 
 
 def _new_test_state(test: dict) -> dict:
@@ -200,6 +261,34 @@ def _rebalance_dates(prices: pd.DataFrame, frequency) -> pd.DatetimeIndex:
     return get_rebalance_dates(prices, frequency)
 
 
+def next_rebalance_date(price_index: pd.DatetimeIndex, frequency, after: pd.Timestamp,
+                        calendar_name: str) -> str | None:
+    """Return the next exchange session aligned with the backtest cadence."""
+    after = pd.Timestamp(after).normalize()
+    calendar = mcal.get_calendar(calendar_name)
+    future = calendar.schedule(start_date=(after + pd.Timedelta(days=1)).date(),
+                               end_date=(after + pd.Timedelta(days=370)).date())
+    future_dates = pd.DatetimeIndex(future.index).tz_localize(None).normalize()
+    dates = pd.DatetimeIndex(price_index).tz_localize(None).normalize().union(future_dates).sort_values()
+
+    if frequency == "monthly":
+        rebalance_dates = []
+        previous_month = None
+        for session_date in dates:
+            month = (session_date.year, session_date.month)
+            if month != previous_month:
+                rebalance_dates.append(session_date)
+                previous_month = month
+    else:
+        interval = frequency if isinstance(frequency, int) else {"weekly": 5, "2weeks": 10}.get(frequency)
+        if not interval or interval < 1:
+            raise ValueError(f"Unsupported rebalance frequency: {frequency}")
+        rebalance_dates = dates[::interval]
+
+    next_date = next((session_date for session_date in rebalance_dates if session_date > after), None)
+    return next_date.date().isoformat() if next_date is not None else None
+
+
 def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> dict:
     universe = test["universe"]
     params = test["parameters"]
@@ -213,6 +302,8 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
     strategy = MomentumStrategy(top_n=params["top_n"],
                                 rebalance_frequency=params["rebalance_frequency"])
     normal_dates = _rebalance_dates(open_prices, params["rebalance_frequency"])
+    test_state["next_rebalance_date"] = next_rebalance_date(
+        open_prices.index, params["rebalance_frequency"], date, history["config"]["calendar"])
     first_run = test_state.get("started_at") is None
     scheduled = first_run or (date in normal_dates and
                               test_state.get("last_processed_rebalance_date") != date.date().isoformat())
@@ -227,13 +318,38 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
     fallback_prices.update({ticker: float(open_prices.loc[date, ticker])
                             for ticker in quote_tickers
                             if ticker in open_prices and pd.notna(open_prices.loc[date, ticker])})
-    prices = current_quotes(quote_tickers, fallback_prices)
+    benchmark_ticker = history["config"]["index"]
+    comparison_ticker = "^GSPC"
+    benchmark_series = history["benchmark"].dropna()
+    if date in benchmark_series.index:
+        fallback_prices[benchmark_ticker] = float(benchmark_series.loc[date])
+    elif not benchmark_series.empty:
+        fallback_prices[benchmark_ticker] = float(benchmark_series.iloc[-1])
+    sp500_path = DATA_DIR / "SP500_index_close.csv"
+    if comparison_ticker not in fallback_prices and sp500_path.exists():
+        sp500_saved = _read_frame(sp500_path).iloc[:, 0].dropna()
+        if not sp500_saved.empty:
+            fallback_prices[comparison_ticker] = float(sp500_saved.iloc[-1])
+    fetched_prices, intraday_highs, intraday_lows = current_quotes(
+        quote_tickers + [benchmark_ticker, comparison_ticker], fallback_prices)
+    benchmark_price = fetched_prices.get(comparison_ticker)
+    prices = {ticker: fetched_prices[ticker] for ticker in quote_tickers if ticker in fetched_prices}
+    if date in open_prices.index:
+        for ticker, value in intraday_highs.items():
+            if ticker in history["high"].columns:
+                old = history["high"].loc[date, ticker]
+                history["high"].loc[date, ticker] = max(float(old), value) if pd.notna(old) else value
+        for ticker, value in intraday_lows.items():
+            if ticker in history["low"].columns:
+                old = history["low"].loc[date, ticker]
+                history["low"].loc[date, ticker] = min(float(old), value) if pd.notna(old) else value
     if not prices and holdings:
         prices = {ticker: float(value) for ticker, value in test_state.get("last_prices", {}).items()}
     if not prices and selection is None:
         # Still establish the run and allow the test to be visible before its
         # next configured rebalance date.
-        prices = fallback_prices
+        prices = {ticker: fallback_prices[ticker] for ticker in quote_tickers
+                  if ticker in fallback_prices}
 
     price_row = pd.DataFrame([prices], index=[date])
     engine = _restore_engine(test, test_state)
@@ -243,6 +359,8 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
         test_state["last_processed_rebalance_date"] = date.date().isoformat()
         test_state["started_at"] = test_state.get("started_at") or now.isoformat(timespec="seconds")
         if selection is not None:
+            test_state["selected_tickers"] = selection.index.astype(str).tolist()
+            test_state["selected_at"] = date.date().isoformat()
             live_regime = "OFF"
             if params["use_regime_filter"]:
                 benchmark = history["benchmark"].dropna()
@@ -270,7 +388,7 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
                                      buy_execution_prices=buys, sell_execution_prices=sells)
 
     # Daily OHLC stop checks mirror the backtester, using the current session's
-    # developing high/low values. The 30-minute run sells after a trigger.
+    # developing high/low values. The next five-minute check sells after a trigger.
     if params["use_stop_loss"] and engine.positions:
         manager = (FixedPercentStopLoss(params["stop_loss_pct"])
                    if params["stop_loss_type"] == "fixed"
@@ -309,9 +427,9 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
         "pnl_pct": equity / float(test_state["initial_capital"]) - 1,
         "cash": float(engine.cash), "unrealized_pnl": float(unrealized),
         "realized_pnl": float(realized), "holdings": len(engine.positions),
-        "prices": prices,
+        "prices": prices, "benchmark_value": benchmark_price,
     })
-    test_state["snapshots"] = test_state["snapshots"][-500:]
+    test_state["snapshots"] = test_state["snapshots"][-20000:]
     test_state["last_updated_at"] = stamp
     return test_state
 

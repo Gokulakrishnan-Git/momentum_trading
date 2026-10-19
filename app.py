@@ -335,7 +335,7 @@ with backtest_tab:
 with forward_tab:
     st.subheader("Forward paper tests")
     st.write("Each frozen test uses the backtest’s own momentum, MACD, RSI, eligibility, score threshold, score-weighted allocation, regime filter, stop-loss rules, and fee model. The first run after freezing starts at the next open session; it then holds until the selected rebalance schedule. Orders remain simulated.")
-    st.caption("GitHub Actions checks market sessions every 30 minutes: S&P 500 (NYSE), NIFTY 500 (NSE), and TOPIX 500 (JPX). Fills use live Yahoo Finance prices with configurable simulated latency and slippage. P&L is marked to the latest available quote. Refresh this tab to load the newest portfolio snapshot.")
+    st.caption("GitHub Actions checks open market sessions every 5 minutes: S&P 500 (NYSE), NIFTY 500 (NSE), and TOPIX 500 (JPX). Fills use Yahoo Finance prices with configurable simulated latency and slippage. P&L is marked to the latest available quote. Refresh this tab to load the newest portfolio snapshot.")
     if st.button("Refresh forward-test values"):
         st.rerun()
 
@@ -434,12 +434,39 @@ with forward_tab:
             c5.metric("Cash", f"{currency} {float(latest.get('cash', 0)):,.2f}")
             c6.metric("Holdings", int(latest.get("holdings", 0)))
             snapshots = test_state.get("snapshots", [])
-            if len(snapshots) > 1:
-                curve = pd.DataFrame([{"Time": pd.Timestamp(row["timestamp"]), "Portfolio value": row["portfolio_value"]}
-                                      for row in snapshots]).set_index("Time")
-                st.line_chart(curve, height=220)
-            if test_state.get("positions"):
-                st.dataframe(pd.DataFrame.from_dict(test_state["positions"], orient="index").rename_axis("Ticker"), use_container_width=True)
+            st.metric("Next rebalance date", test_state.get("next_rebalance_date") or "Pending")
+            initial_capital = float(params.get("initial_capital", 0))
+            curve_rows = [{
+                "Time": pd.to_datetime(row["timestamp"], utc=True).tz_convert("Asia/Kolkata"),
+                "Portfolio value": float(row["portfolio_value"]),
+                "Benchmark value": row.get("benchmark_value"),
+            } for row in snapshots if row.get("timestamp") and initial_capital > 0]
+            if curve_rows:
+                curve = pd.DataFrame(curve_rows).set_index("Time")
+                portfolio_values = pd.to_numeric(curve.pop("Portfolio value"), errors="coerce")
+                if not portfolio_values.empty and float(portfolio_values.iloc[0]) > 0:
+                    curve["Portfolio (start = 100)"] = 100 * portfolio_values / float(portfolio_values.iloc[0])
+                benchmark_values = pd.to_numeric(curve.pop("Benchmark value"), errors="coerce")
+                benchmark_values = benchmark_values.dropna()
+                if not benchmark_values.empty and float(benchmark_values.iloc[0]) > 0:
+                    curve["S&P 500 (start = 100)"] = (
+                        100 * pd.to_numeric(
+                            pd.Series([row.get("benchmark_value") for row in snapshots
+                                       if row.get("timestamp") and initial_capital > 0], index=curve.index),
+                            errors="coerce") / float(benchmark_values.iloc[0]))
+                st.caption("Performance indexed to 100 at the first recorded check; chart values are relative returns.")
+                st.line_chart(curve, height=260)
+            selected_tickers = test_state.get("selected_tickers") or list(test_state.get("positions", {}))
+            if selected_tickers:
+                st.markdown(f"**Top {len(selected_tickers)} selected** · {test_state.get('selected_at', 'selection date pending')}")
+                positions = test_state.get("positions", {})
+                last_prices = latest.get("prices", {})
+                selected_rows = [{
+                    "Rank": rank, "Ticker": ticker,
+                    "Shares held": positions.get(ticker, {}).get("shares", 0),
+                    "Latest price": last_prices.get(ticker),
+                } for rank, ticker in enumerate(selected_tickers, 1)]
+                st.dataframe(pd.DataFrame(selected_rows), use_container_width=True, hide_index=True)
             st.caption(f"Last update: {test_state.get('last_updated_at', 'pending')}")
             if test_state.get("trades"):
                 with st.expander(f"Recent simulated trades · {len(test_state['trades'])} total"):
