@@ -13,6 +13,7 @@ import requests
 from datetime import datetime, timedelta
 import calendar
 import seaborn as sns
+import time
 
 
 
@@ -1090,7 +1091,8 @@ class Strategy(ABC):
     @abstractmethod
     def generate_positions(
         self,
-        prices
+        prices,
+        rebalance_dates=None
     ):
         pass
 
@@ -1504,19 +1506,21 @@ class MomentumStrategy(Strategy):
 
     def generate_positions(
         self,
-        prices
+        prices,
+        rebalance_dates=None
     ):
 
         # ==================================================
         # REBALANCE DATES
         # ==================================================
 
-        rebalance_dates = (
-            get_rebalance_dates(
+        if rebalance_dates is None:
+            rebalance_dates = get_rebalance_dates(
                 prices,
                 self.rebalance_frequency
             )
-        )
+        else:
+            rebalance_dates = pd.DatetimeIndex(rebalance_dates)
 
 
         # ==================================================
@@ -2568,7 +2572,9 @@ class ExecutionEngine:
         use_charges=True,
         market="US",
         fee_model=None,
-        currency=None
+        currency=None,
+        simulated_latency_seconds=0.0,
+        simulated_slippage_bps=0.0
     ):
 
         self.initial_capital = initial_capital
@@ -2590,6 +2596,8 @@ class ExecutionEngine:
         self.cash = initial_capital
 
         self.use_charges = use_charges
+        self.simulated_latency_seconds = max(0.0, float(simulated_latency_seconds))
+        self.simulated_slippage_bps = max(0.0, float(simulated_slippage_bps))
 
         self.positions = {}
 
@@ -2693,6 +2701,9 @@ class ExecutionEngine:
             if stock not in prices.columns:
                 continue
 
+            if self.simulated_latency_seconds:
+                time.sleep(self.simulated_latency_seconds)
+
             if stock in execution_prices:
                 price = execution_prices[stock]
             else:
@@ -2746,6 +2757,8 @@ class ExecutionEngine:
                 "RealizedPnL": realized_pnl,
                 "ReturnPct": return_pct,
                 "Reason": sell_reason,
+                "SimulatedLatencySeconds": self.simulated_latency_seconds,
+                "SimulatedSlippageBps": self.simulated_slippage_bps,
                 "Market": self.market,
                 "Currency": self.currency,
             })
@@ -2758,7 +2771,10 @@ class ExecutionEngine:
 
             del self.positions[stock]
 
-    def rebalance(self, target_weights, prices, date):
+    def rebalance(
+        self, target_weights, prices, date, execution_prices=None,
+        buy_execution_prices=None, sell_execution_prices=None
+    ):
         if len(target_weights) == 0:
             return
 
@@ -2769,6 +2785,9 @@ class ExecutionEngine:
             )
 
         portfolio_value = self.portfolio_value(prices, date)
+        execution_prices = execution_prices or {}
+        buy_execution_prices = buy_execution_prices or execution_prices
+        sell_execution_prices = sell_execution_prices or execution_prices
 
         target_shares = {}
 
@@ -2802,7 +2821,10 @@ class ExecutionEngine:
             if stock not in prices.columns:
                 continue
 
-            price = prices.loc[date, stock]
+            if self.simulated_latency_seconds:
+                time.sleep(self.simulated_latency_seconds)
+
+            price = sell_execution_prices.get(stock, prices.loc[date, stock])
             if pd.isna(price) or price <= 0:
                 continue
 
@@ -2844,6 +2866,8 @@ class ExecutionEngine:
                     (entry_price * shares_to_sell) * 100
                 ),
                 "Reason": "REBALANCE",
+                "SimulatedLatencySeconds": self.simulated_latency_seconds,
+                "SimulatedSlippageBps": self.simulated_slippage_bps,
                 "Market": self.market,
                 "Currency": self.currency,
             })
@@ -2873,7 +2897,10 @@ class ExecutionEngine:
             if stock not in prices.columns:
                 continue
 
-            price = prices.loc[date, stock]
+            if self.simulated_latency_seconds:
+                time.sleep(self.simulated_latency_seconds)
+
+            price = buy_execution_prices.get(stock, prices.loc[date, stock])
             if pd.isna(price) or price <= 0:
                 continue
 
@@ -2955,6 +2982,8 @@ class ExecutionEngine:
                 "RealizedPnL": 0.0,
                 "ReturnPct": 0.0,
                 "Reason": "ENTRY",
+                "SimulatedLatencySeconds": self.simulated_latency_seconds,
+                "SimulatedSlippageBps": self.simulated_slippage_bps,
                 "Market": self.market,
                 "Currency": self.currency,
             })

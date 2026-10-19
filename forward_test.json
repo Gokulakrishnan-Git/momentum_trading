@@ -1,24 +1,4 @@
 {
-  "schema_version": 1,
-  "status": "awaiting_ibkr_setup",
-  "frozen_at": "2026-10-17T17:20:33+05:30",
-  "forward_started_at": null,
-  "provider": "IBKR TWS API",
-  "execution_mode": "internal_paper_simulation_only",
-  "parameters": {
-    "universe": "SP500",
-    "use_regime_filter": false,
-    "allowed_regimes": [
-      "Bull"
-    ],
-    "rebalance_frequency": 3,
-    "top_n": 5,
-    "use_stop_loss": false,
-    "stop_loss_type": "fixed",
-    "stop_loss_pct": 0.08,
-    "use_charges": true,
-    "initial_capital": 1000000.0,
-    "signal_cadence": "daily",
-    "intraday_execution_data": true
-  }
+  "schema_version": 2,
+  "tests": []
 }

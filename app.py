@@ -5,12 +5,15 @@ from io import StringIO
 from pathlib import Path
 import json
 import os
+import subprocess
 import time
+import uuid
 
 import pandas as pd
+import requests
 import streamlit as st
 import yfinance as yf
-from forward_test import STATE as FORWARD_STATE_PATH, market_state as us_market_state
+from forward_test import STATE_PATH as FORWARD_STATE_PATH, market_state
 
 from strategy_engine import run_strategy_backtest
 
@@ -166,6 +169,49 @@ def write_forward_config(config: dict) -> None:
     os.replace(temporary, FORWARD_CONFIG_PATH)
 
 
+def publish_forward_config() -> tuple[bool, str]:
+    """Commit the newly frozen configuration so Actions can start the test."""
+    def git(*args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(["git", *args], cwd=ROOT, text=True,
+                              capture_output=True, timeout=120)
+
+    added = git("add", "--", FORWARD_CONFIG_PATH.name)
+    if added.returncode:
+        return False, added.stderr.strip() or "Could not stage the forward-test configuration."
+    committed = git("commit", "-m", "Freeze forward test", "--", FORWARD_CONFIG_PATH.name)
+    if committed.returncode:
+        return False, committed.stderr.strip() or "Could not commit the forward-test configuration."
+    fetched = git("fetch", "origin", "main")
+    if fetched.returncode:
+        return False, fetched.stderr.strip() or "Could not fetch the latest GitHub state."
+    merged = git("merge", "--no-edit", "origin/main")
+    if merged.returncode:
+        return False, merged.stderr.strip() or "Could not merge the latest GitHub state. Resolve the Git conflict and try again."
+    pushed = git("push", "origin", "main")
+    if pushed.returncode:
+        return False, pushed.stderr.strip() or "Could not push the frozen test to GitHub."
+    return True, "Frozen test pushed; GitHub Actions will start it at the next scheduled run."
+
+
+def read_forward_state() -> dict:
+    """Read the latest state Actions committed; fall back to a local copy."""
+    try:
+        response = requests.get(
+            f"https://raw.githubusercontent.com/Gokulakrishnan-Git/momentum_trading/main/forward_state.json?ts={int(time.time())}",
+            timeout=4,
+        )
+        if response.ok:
+            return response.json()
+    except (requests.RequestException, json.JSONDecodeError):
+        pass
+    if FORWARD_STATE_PATH.exists():
+        try:
+            return json.loads(FORWARD_STATE_PATH.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            pass
+    return {"tests": {}}
+
+
 st.set_page_config(page_title="Momentum Strategy Backtest", page_icon="📈", layout="wide")
 st.markdown("<style>.block-container{max-width:1450px;padding-top:2rem}.hero{padding:1.5rem 1.8rem;border-radius:18px;background:linear-gradient(115deg,#10283f,#173f56);color:#f4f8fb;margin-bottom:1.2rem}.hero h1{margin:0 0 .35rem;font-size:2rem}.hero p{margin:0;color:#c6d9e4}[data-testid='stMetricValue'],[data-testid='stMetricValue'] div{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere;font-size:clamp(1.25rem,2.2vw,1.85rem)!important}</style>", unsafe_allow_html=True)
 st.markdown('<section class="hero"><h1>Momentum Strategy Backtest</h1><p>Run the notebook strategy against saved market data and export every report table.</p></section>', unsafe_allow_html=True)
@@ -287,27 +333,116 @@ with backtest_tab:
 
 
 with forward_tab:
-    st.subheader("US market forward test")
-    market_open, market_message = us_market_state(datetime.now(timezone.utc))
-    (st.success if market_open else st.info)(market_message)
-    st.write("GitHub Actions checks the NYSE session every 30 minutes on weekdays. While the market is open it records current Yahoo Finance prices for the five highest 12-month momentum stocks in the saved S&P 500 universe. The first run each session simulates sells and buys; later runs record prices only.")
-    st.caption("Paper-only execution: each simulated fill waits one second and applies 5 bps of adverse slippage. No brokerage connection or live orders are used. GitHub Actions must be enabled for this repository, and its default branch must contain this workflow.")
-    if FORWARD_STATE_PATH.exists():
-        try:
-            forward_state = json.loads(FORWARD_STATE_PATH.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            forward_state = {}
-        if forward_state:
-            positions = forward_state.get("positions", {})
-            st.markdown("### Paper portfolio")
-            left, right, third = st.columns(3)
-            left.metric("Cash", f"${float(forward_state.get('cash', 0)):,.2f}")
-            right.metric("Holdings", len(positions))
-            third.metric("Recorded fills", len(forward_state.get("trades", [])))
-            if positions:
-                st.dataframe(pd.DataFrame.from_dict(positions, orient="index").rename_axis("Ticker"), use_container_width=True)
-            if forward_state.get("last_updated_at"):
-                st.caption(f"Last workflow update: {forward_state['last_updated_at']}")
-    else:
-        st.caption("No GitHub Actions run has saved a forward-test snapshot yet.")
+    st.subheader("Forward paper tests")
+    st.write("Each frozen test uses the backtest’s own momentum, MACD, RSI, eligibility, score threshold, score-weighted allocation, regime filter, stop-loss rules, and fee model. The first run after freezing starts at the next open session; it then holds until the selected rebalance schedule. Orders remain simulated.")
+    st.caption("GitHub Actions checks market sessions every 30 minutes: S&P 500 (NYSE), NIFTY 500 (NSE), and TOPIX 500 (JPX). Fills use live Yahoo Finance prices with configurable simulated latency and slippage. P&L is marked to the latest available quote.")
+    if st.button("Refresh forward-test values"):
+        st.rerun()
+
+    config = read_forward_config() or {}
+    frozen_tests = config.get("tests", []) if isinstance(config.get("tests"), list) else []
+    active_count = sum(test.get("status", "active") == "active" for test in frozen_tests)
+    st.markdown("### Freeze a new test")
+    with st.form("forward_setup"):
+        f1, f2, f3 = st.columns(3)
+        with f1:
+            f_name = st.text_input("Test name", value=f"Forward test {len(frozen_tests) + 1}")
+            f_universe = st.selectbox("Market universe", list(UNIVERSES), index=1,
+                                      format_func=lambda key: UNIVERSES[key]["label"])
+            f_capital = st.number_input("Starting capital", min_value=1, value=1_000_000, step=100_000)
+        with f2:
+            f_top_n = st.number_input("Number of holdings", min_value=1, max_value=100, value=5)
+            f_frequency_label = st.selectbox("Rebalance frequency", ["Monthly", "Every 2 weeks", "Weekly", "Every N trading days"])
+            f_frequency_days = st.number_input("Trading days between rebalances", min_value=1, max_value=252, value=3,
+                                               disabled=f_frequency_label != "Every N trading days")
+        with f3:
+            f_use_regime = st.toggle("Use market regime filter", value=True)
+            f_allowed = st.multiselect("Allowed regimes", ["Bull", "Bear"], default=["Bull"], disabled=not f_use_regime)
+            f_use_stop = st.toggle("Use stop loss", value=False)
+            f_stop_type = st.selectbox("Stop type", ["Fixed percent", "Trailing percent"], disabled=not f_use_stop)
+            f_stop_pct = st.slider("Stop distance (%)", min_value=1, max_value=50, value=8, disabled=not f_use_stop) / 100
+        f4, f5 = st.columns(2)
+        with f4:
+            f_charges = st.toggle("Include backtest fee model", value=True)
+        with f5:
+            f_latency = st.number_input("Simulated order latency (seconds)", min_value=0.0, max_value=10.0, value=1.0, step=0.25)
+            f_slippage = st.number_input("Adverse slippage (basis points)", min_value=0.0, max_value=100.0, value=5.0, step=1.0)
+        freeze = st.form_submit_button("Freeze and start test", type="primary")
+
+    if freeze:
+        if not f_name.strip():
+            st.error("Enter a name for this forward test.")
+        elif f_use_regime and not f_allowed:
+            st.error("Choose at least one allowed regime, or turn off the regime filter.")
+        else:
+            frequency = int(f_frequency_days) if f_frequency_label == "Every N trading days" else {
+                "Monthly": "monthly", "Every 2 weeks": "2weeks", "Weekly": "weekly"
+            }[f_frequency_label]
+            new_test = {
+                "id": uuid.uuid4().hex[:12], "name": f_name.strip(), "universe": f_universe,
+                "status": "active", "frozen_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "parameters": {
+                    "top_n": int(f_top_n), "rebalance_frequency": frequency,
+                    "use_regime_filter": f_use_regime, "allowed_regimes": f_allowed or ["Bull"],
+                    "use_stop_loss": f_use_stop,
+                    "stop_loss_type": "fixed" if f_stop_type == "Fixed percent" else "trailing",
+                    "stop_loss_pct": float(f_stop_pct), "use_charges": f_charges,
+                    "initial_capital": float(f_capital),
+                    "simulated_latency_seconds": float(f_latency),
+                    "simulated_slippage_bps": float(f_slippage),
+                },
+            }
+            updated_config = {"schema_version": 2, "tests": [*frozen_tests, new_test]}
+            write_forward_config(updated_config)
+            frozen_tests.append(new_test)
+            active_count += 1
+            pushed, publish_message = publish_forward_config()
+            (st.success if pushed else st.error)(publish_message)
+            if pushed:
+                st.info("The test is active. If its market is closed, its first portfolio will be created at the next market open.")
+
+    forward_state = read_forward_state()
+    states_by_id = forward_state.get("tests", {})
+    st.markdown(f"### Frozen tests · {active_count} active")
+    if not frozen_tests:
+        st.caption("No forward tests are frozen yet. Freezing a test publishes it to GitHub Actions; you can create additional tests with different parameters at any time.")
+    for test in frozen_tests:
+        test_id = test.get("id", "unknown")
+        params = test.get("parameters", {})
+        test_state = states_by_id.get(test_id, {})
+        latest = (test_state.get("snapshots") or [{}])[-1]
+        currency = UNIVERSES.get(test.get("universe"), {}).get("currency", "USD")
+        status = test.get("status", "active")
+        st.markdown(f"#### {test.get('name', test_id)} · {test.get('universe', '')} · {status.title()}")
+        if st.button("Pause test" if status == "active" else "Resume test", key=f"toggle_test_{test_id}"):
+            test["status"] = "paused" if status == "active" else "active"
+            write_forward_config({"schema_version": 2, "tests": frozen_tests})
+            saved, message = publish_forward_config()
+            (st.success if saved else st.error)(message)
+            if saved:
+                st.rerun()
+        open_now, market_message = market_state(datetime.now(timezone.utc), test.get("universe", "SP500"))
+        (st.success if open_now else st.info)(market_message)
+        st.caption(f"{params.get('top_n', 5)} holdings · {params.get('rebalance_frequency', 'monthly')} rebalance · Frozen {test.get('frozen_at', 'unknown')}")
+        if latest:
+            c1, c2, c3, c4, c5, c6 = st.columns(6)
+            c1.metric("Portfolio value", f"{currency} {float(latest.get('portfolio_value', 0)):,.2f}")
+            c2.metric("Total P&L", f"{currency} {float(latest.get('pnl', 0)):,.2f}", f"{float(latest.get('pnl_pct', 0)):.2%}")
+            c3.metric("Unrealized P&L", f"{currency} {float(latest.get('unrealized_pnl', 0)):,.2f}")
+            c4.metric("Realized P&L", f"{currency} {float(latest.get('realized_pnl', 0)):,.2f}")
+            c5.metric("Cash", f"{currency} {float(latest.get('cash', 0)):,.2f}")
+            c6.metric("Holdings", int(latest.get("holdings", 0)))
+            snapshots = test_state.get("snapshots", [])
+            if len(snapshots) > 1:
+                curve = pd.DataFrame([{"Time": pd.Timestamp(row["timestamp"]), "Portfolio value": row["portfolio_value"]}
+                                      for row in snapshots]).set_index("Time")
+                st.line_chart(curve, height=220)
+            if test_state.get("positions"):
+                st.dataframe(pd.DataFrame.from_dict(test_state["positions"], orient="index").rename_axis("Ticker"), use_container_width=True)
+            st.caption(f"Last update: {test_state.get('last_updated_at', 'pending')}")
+            if test_state.get("trades"):
+                with st.expander(f"Recent simulated trades · {len(test_state['trades'])} total"):
+                    st.dataframe(pd.DataFrame(test_state["trades"][-20:]), use_container_width=True, hide_index=True)
+        else:
+            st.info("Waiting for the next market-open Actions run to build the first portfolio.")
 

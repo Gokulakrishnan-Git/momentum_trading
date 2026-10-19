@@ -12,11 +12,13 @@ Choose a universe, date range, regime filter, allowed regimes, rebalance frequen
 
 The strategy implementation in `strategy_engine.py` is extracted from definition cells in `momentum_updated_regime_exact_tested_updated.ipynb`; notebook download and execution cells are excluded. Existing `backtest_output/` files are retained, and new runs save the notebook's CSV reports there.
 
-## US forward test
+## Forward paper tests
 
-`.github/workflows/us-forward-test.yml` schedules `forward_test.py` every 30 minutes across the US session. The script checks the NYSE calendar (including holidays and daylight saving time), ranks the saved S&P 500 symbols using 12-month momentum, downloads current intraday Yahoo Finance prices for the top five and current holdings, and saves paper portfolio snapshots in `forward_state.json`. It simulates a rebalance on the first run of each session, with one second of delay and 5 basis points of adverse slippage per fill. It does not send brokerage orders.
+The Forward test tab lets you freeze multiple independent tests using S&P 500, NIFTY 500, or TOPIX 500 data. Each test saves its own starting capital, rebalance frequency, holding count, regime filter, stop-loss settings, fee toggle, simulated latency, and slippage in `forward_test.json`. Freezing commits and pushes the configuration to GitHub; a push-triggered Actions run starts it at the next open session. Repeated tests with different parameters keep separate cash, positions, fills, portfolio value, and P&L in `forward_state.json`.
 
-GitHub Actions must be enabled and the workflow must exist on the repository's default branch. The workflow needs permission to push commits so it can persist `forward_state.json` between ephemeral runners. GitHub cron runs are approximate and can be delayed; Yahoo Finance prices may also be delayed or unavailable, so this is an operational forward-test simulation rather than exchange-grade execution data. The app's Forward test tab reports the current NYSE market state and displays the latest saved portfolio state.
+Forward signals use the same `MomentumStrategy`, `ScoreWeightAllocator`, `MarketRegime`, stop managers, and market fee profiles as the backtester. The workflow updates daily OHLC history in memory through yfinance, calculates the selected strategy at the market open, applies sells before buys, then holds until the next configured rebalance date. It monitors enabled stop losses during the session and marks the portfolio to current Yahoo Finance prices every 30 minutes. Simulated fills apply the frozen delay and adverse slippage; no brokerage orders are sent.
+
+GitHub Actions must be enabled, and the workflow must exist on the repository's default branch. The workflow commits forward state between ephemeral runners. GitHub cron times are approximate, and Yahoo Finance can delay or omit prices, so the results are a paper simulation rather than exchange-grade fills. The market calendars account for local exchange sessions, holidays, and the JPX lunch break.
 
 ## Desktop shortcut
 

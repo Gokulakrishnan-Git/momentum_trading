@@ -1,10 +1,15 @@
 name: US market forward test
 
 on:
-  # Covers the NYSE session in both EST and EDT. The runner rejects times
-  # outside the actual session and on exchange holidays.
+  # Every 30 minutes during Japan/US sessions; the India open is offset by 15m.
+  # The runner applies the exchange calendar and holiday/break checks.
   schedule:
-    - cron: "0,30 13-21 * * 1-5"
+    - cron: "0,30 0-6,13-21 * * 1-5"
+    - cron: "15,45 3-10 * * 1-5"
+  push:
+    branches: [main]
+    paths:
+      - "forward_test.json"
   workflow_dispatch:
 
 permissions:
@@ -25,7 +30,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install runner dependencies
-        run: python -m pip install pandas yfinance pandas_market_calendars
+        run: python -m pip install numpy pandas matplotlib seaborn requests yfinance pandas_market_calendars
       - name: Capture prices and simulate paper rebalance
         run: python forward_test.py
       - name: Persist paper portfolio and fills
