@@ -511,10 +511,11 @@ with forward_tab:
         (st.success if open_now else st.info)(market_message)
         st.caption(f"{params.get('top_n', 5)} holdings · {params.get('rebalance_frequency', 'monthly')} rebalance · Frozen {test.get('frozen_at', 'unknown')}")
         if latest:
-            c1, c2, c3, c4, c5, c6 = st.columns(6)
+            c1, c2, c3 = st.columns(3)
             c1.metric("Portfolio value", f"{currency} {float(latest.get('portfolio_value', 0)):,.2f}")
             c2.metric("Total P&L", f"{currency} {float(latest.get('pnl', 0)):,.2f}", f"{float(latest.get('pnl_pct', 0)):.2%}")
             c3.metric("Unrealized P&L", f"{currency} {float(latest.get('unrealized_pnl', 0)):,.2f}")
+            c4, c5, c6 = st.columns(3)
             c4.metric("Realized P&L", f"{currency} {float(latest.get('realized_pnl', 0)):,.2f}")
             c5.metric("Cash", f"{currency} {float(latest.get('cash', 0)):,.2f}")
             c6.metric("Holdings", int(latest.get("holdings", 0)))
@@ -524,23 +525,26 @@ with forward_tab:
             curve_rows = [{
                 "Time": pd.to_datetime(row["timestamp"], utc=True).tz_convert("Asia/Kolkata"),
                 "Portfolio value": float(row["portfolio_value"]),
+                "Portfolio P&L": float(row["portfolio_value"]) - initial_capital,
+                "Portfolio return (%)": 100 * (float(row["portfolio_value"]) / initial_capital - 1),
                 "Benchmark value": row.get("benchmark_value"),
             } for row in snapshots if row.get("timestamp") and initial_capital > 0]
             if curve_rows:
                 curve = pd.DataFrame(curve_rows).set_index("Time")
-                portfolio_values = pd.to_numeric(curve.pop("Portfolio value"), errors="coerce")
-                if not portfolio_values.empty and float(portfolio_values.iloc[0]) > 0:
-                    curve["Portfolio (start = 100)"] = 100 * portfolio_values / float(portfolio_values.iloc[0])
-                benchmark_values = pd.to_numeric(curve.pop("Benchmark value"), errors="coerce")
+                benchmark_values = pd.to_numeric(curve["Benchmark value"], errors="coerce")
                 benchmark_values = benchmark_values.dropna()
                 if not benchmark_values.empty and float(benchmark_values.iloc[0]) > 0:
-                    curve["S&P 500 (start = 100)"] = (
-                        100 * pd.to_numeric(
-                            pd.Series([row.get("benchmark_value") for row in snapshots
-                                       if row.get("timestamp") and initial_capital > 0], index=curve.index),
-                            errors="coerce") / float(benchmark_values.iloc[0]))
-                st.caption("Performance indexed to 100 at the first recorded check; chart values are relative returns.")
-                st.line_chart(curve, height=260)
+                    curve["S&P 500 return (%)"] = 100 * (pd.to_numeric(curve["Benchmark value"], errors="coerce") / float(benchmark_values.iloc[0]) - 1)
+                curve = curve.drop(columns=["Benchmark value", "Portfolio value"])
+                st.subheader("Portfolio P&L")
+                st.caption(f"Cumulative paper P&L from the frozen starting capital, in {currency}.")
+                st.area_chart(curve[["Portfolio P&L"]], height=220)
+                st.subheader("Portfolio return vs S&P 500")
+                return_series = ["Portfolio return (%)"]
+                if "S&P 500 return (%)" in curve:
+                    return_series.append("S&P 500 return (%)")
+                st.line_chart(curve[return_series], height=260)
+                st.caption("Returns are percentages from the starting capital / first S&P 500 reading. The Total P&L metric above shows both the currency amount and percentage.")
             selected_tickers = test_state.get("selected_tickers") or list(test_state.get("positions", {}))
             if selected_tickers:
                 st.markdown(f"**Top {len(selected_tickers)} selected** · {test_state.get('selected_at', 'selection date pending')}")
