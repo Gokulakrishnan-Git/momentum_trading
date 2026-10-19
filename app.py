@@ -544,6 +544,13 @@ def render_forward_tab():
                         return_series.append("S&P 500 return (%)")
                     st.line_chart(curve[return_series], height=260)
                     st.caption("Returns are percentages from the starting capital / first S&P 500 reading. The Total P&L metric above shows both the currency amount and percentage.")
+                    if "S&P 500 return (%)" in curve:
+                        benchmark_returns = curve[["S&P 500 return (%)"]].dropna()
+                        if len(benchmark_returns) > 1:
+                            benchmark_change = float(benchmark_returns.iloc[-1, 0] - benchmark_returns.iloc[0, 0])
+                            st.subheader("S&P 500 intraday movement · zoomed")
+                            st.caption(f"S&P 500 changed {benchmark_change:+.4f}% across the recorded checks. This chart uses its own vertical scale to make small moves visible; compare with the shared-scale chart above for relative performance.")
+                            st.line_chart(benchmark_returns, height=220)
                 selected_tickers = test_state.get("selected_tickers") or list(test_state.get("positions", {}))
                 if selected_tickers:
                     st.markdown(f"**Top {len(selected_tickers)} selected** · {test_state.get('selected_at', 'selection date pending')}")
