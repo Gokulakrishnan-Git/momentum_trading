@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - "forward_test.json"
+      - "app.py"
   workflow_dispatch:
 
 permissions:

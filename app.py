@@ -381,47 +381,6 @@ with forward_tab:
     st.subheader("Forward paper tests")
     st.write("Each frozen test uses the backtest’s own momentum, MACD, RSI, eligibility, score threshold, score-weighted allocation, regime filter, stop-loss rules, and fee model. The first run after freezing starts at the next open session; it then holds until the selected rebalance schedule. Orders remain simulated.")
     st.caption("GitHub Actions checks open market sessions every 5 minutes: S&P 500 (NYSE), NIFTY 500 (NSE), and TOPIX 500 (JPX). Fills use Yahoo Finance prices with configurable simulated latency and slippage. P&L is marked to the latest available quote. Refresh this tab to load the newest portfolio snapshot.")
-    st.components.v1.html("""
-    <div id="actions-countdown" style="font: 15px sans-serif; color: #c8d1dc; padding: 5px 0"></div>
-    <script>
-      (() => {
-        const output = document.getElementById("actions-countdown");
-        const timeFormatter = new Intl.DateTimeFormat("en-IN", {
-          timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: false
-        });
-        function nextScheduledRun(after) {
-          const candidate = new Date(after);
-          candidate.setUTCSeconds(0, 0);
-          candidate.setUTCMinutes(Math.floor(candidate.getUTCMinutes() / 5) * 5);
-          if (candidate.getTime() <= after.getTime()) candidate.setUTCMinutes(candidate.getUTCMinutes() + 5);
-          for (let i = 0; i < 5000; i++) {
-            const day = candidate.getUTCDay();
-            const hour = candidate.getUTCHours();
-            if (day >= 1 && day <= 5 && ((hour >= 0 && hour <= 10) || (hour >= 13 && hour <= 21))) {
-              return candidate;
-            }
-            candidate.setUTCMinutes(candidate.getUTCMinutes() + 5);
-          }
-          return candidate;
-        }
-        let target = nextScheduledRun(new Date());
-        function render() {
-          let remaining = target.getTime() - Date.now();
-          if (remaining <= 0) {
-            target = nextScheduledRun(new Date());
-            remaining = target.getTime() - Date.now();
-          }
-          const totalSeconds = Math.max(0, Math.floor(remaining / 1000));
-          const minutes = Math.floor(totalSeconds / 60);
-          const seconds = String(totalSeconds % 60).padStart(2, "0");
-          output.textContent = `Next GitHub Actions check scheduled in ${minutes}m ${seconds}s · ${timeFormatter.format(target)} IST`;
-        }
-        render();
-        setInterval(render, 1000);
-      })();
-    </script>
-    """, height=38, scrolling=False)
-    st.caption("The countdown shows the next five-minute scheduled slot in the workflow's UTC schedule, displayed in IST. GitHub may start a scheduled run late.")
     if st.button("Refresh forward-test values"):
         st.rerun()
 
@@ -491,6 +450,47 @@ with forward_tab:
     forward_state = read_forward_state()
     states_by_id = forward_state.get("tests", {})
     st.markdown(f"### Frozen tests · {active_count} active")
+    st.components.v1.html("""
+    <div id="actions-countdown" style="font: 15px sans-serif; color: #c8d1dc; padding: 5px 0"></div>
+    <script>
+      (() => {
+        const output = document.getElementById("actions-countdown");
+        const timeFormatter = new Intl.DateTimeFormat("en-IN", {
+          timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: false
+        });
+        function nextScheduledRun(after) {
+          const candidate = new Date(after);
+          candidate.setUTCSeconds(0, 0);
+          candidate.setUTCMinutes(Math.floor(candidate.getUTCMinutes() / 5) * 5);
+          if (candidate.getTime() <= after.getTime()) candidate.setUTCMinutes(candidate.getUTCMinutes() + 5);
+          for (let i = 0; i < 5000; i++) {
+            const day = candidate.getUTCDay();
+            const hour = candidate.getUTCHours();
+            if (day >= 1 && day <= 5 && ((hour >= 0 && hour <= 10) || (hour >= 13 && hour <= 21))) {
+              return candidate;
+            }
+            candidate.setUTCMinutes(candidate.getUTCMinutes() + 5);
+          }
+          return candidate;
+        }
+        let target = nextScheduledRun(new Date());
+        function render() {
+          let remaining = target.getTime() - Date.now();
+          if (remaining <= 0) {
+            target = nextScheduledRun(new Date());
+            remaining = target.getTime() - Date.now();
+          }
+          const totalSeconds = Math.max(0, Math.floor(remaining / 1000));
+          const minutes = Math.floor(totalSeconds / 60);
+          const seconds = String(totalSeconds % 60).padStart(2, "0");
+          output.textContent = `Next GitHub Actions check scheduled in ${minutes}m ${seconds}s · ${timeFormatter.format(target)} IST`;
+        }
+        render();
+        setInterval(render, 1000);
+      })();
+    </script>
+    """, height=38, scrolling=False)
+    st.caption("The countdown shows the next five-minute scheduled slot in the workflow's UTC schedule, displayed in IST. GitHub may start a scheduled run late.")
     if not frozen_tests:
         st.caption("No forward tests are frozen yet. Freezing a test publishes it to GitHub Actions; you can create additional tests with different parameters at any time.")
     for test in frozen_tests:
