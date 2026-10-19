@@ -1,0 +1,201 @@
+{
+  "schema_version": 2,
+  "tests": {
+    "11276352bde9": {
+      "cash": 337.84589647804387,
+      "initial_capital": 1000000.0,
+      "positions": {
+        "MPC": {
+          "shares": 422,
+          "entry_price": 487.36825717163083,
+          "buy_date": "2026-10-19"
+        },
+        "PSX": {
+          "shares": 678,
+          "entry_price": 296.9183740081787,
+          "buy_date": "2026-10-19"
+        },
+        "VLO": {
+          "shares": 446,
+          "entry_price": 450.6452234344482,
+          "buy_date": "2026-10-19"
+        },
+        "VEEV": {
+          "shares": 632,
+          "entry_price": 314.75730610656734,
+          "buy_date": "2026-10-19"
+        },
+        "APA": {
+          "shares": 3924,
+          "entry_price": 49.11954872131347,
+          "buy_date": "2026-10-19"
+        }
+      },
+      "trades": [
+        {
+          "Date": "2026-10-19 00:00:00",
+          "Action": "BUY",
+          "Ticker": "MPC",
+          "Shares": 422,
+          "Price": 487.36825717163083,
+          "TradeValue": 205669.4045264282,
+          "Commission": 1.477,
+          "TransactionTaxes": 0.0,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.0,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.085666,
+          "TotalFees": 1.562666,
+          "RealizedPnL": 0.0,
+          "ReturnPct": 0.0,
+          "Reason": "ENTRY",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-10-19 00:00:00",
+          "Action": "BUY",
+          "Ticker": "PSX",
+          "Shares": 678,
+          "Price": 296.9183740081787,
+          "TradeValue": 201310.65757754518,
+          "Commission": 2.373,
+          "TransactionTaxes": 0.0,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.0,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.137634,
+          "TotalFees": 2.510634,
+          "RealizedPnL": 0.0,
+          "ReturnPct": 0.0,
+          "Reason": "ENTRY",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-10-19 00:00:00",
+          "Action": "BUY",
+          "Ticker": "VLO",
+          "Shares": 446,
+          "Price": 450.6452234344482,
+          "TradeValue": 200987.7696517639,
+          "Commission": 1.561,
+          "TransactionTaxes": 0.0,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.0,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.09053800000000001,
+          "TotalFees": 1.651538,
+          "RealizedPnL": 0.0,
+          "ReturnPct": 0.0,
+          "Reason": "ENTRY",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-10-19 00:00:00",
+          "Action": "BUY",
+          "Ticker": "VEEV",
+          "Shares": 632,
+          "Price": 314.75730610656734,
+          "TradeValue": 198926.61745935056,
+          "Commission": 2.212,
+          "TransactionTaxes": 0.0,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.0,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.12829600000000002,
+          "TotalFees": 2.3402960000000004,
+          "RealizedPnL": 0.0,
+          "ReturnPct": 0.0,
+          "Reason": "ENTRY",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-10-19 00:00:00",
+          "Action": "BUY",
+          "Ticker": "APA",
+          "Shares": 3924,
+          "Price": 49.11954872131347,
+          "TradeValue": 192745.10918243407,
+          "Commission": 13.734,
+          "TransactionTaxes": 0.0,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.0,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.7965720000000001,
+          "TotalFees": 14.530572,
+          "RealizedPnL": 0.0,
+          "ReturnPct": 0.0,
+          "Reason": "ENTRY",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        }
+      ],
+      "snapshots": [
+        {
+          "timestamp": "2026-10-19T10:13:08-04:00",
+          "portfolio_value": 999477.8342997984,
+          "pnl": -522.1657002016436,
+          "pnl_pct": -0.0005221657002016933,
+          "cash": 337.84589647804387,
+          "unrealized_pnl": -499.5699942015908,
+          "realized_pnl": 0.0,
+          "holdings": 5,
+          "prices": {
+            "MPC": 487.12469482421875,
+            "PSX": 296.7699890136719,
+            "VLO": 450.4200134277344,
+            "VEEV": 314.6000061035156,
+            "APA": 49.095001220703125
+          },
+          "benchmark_value": 7702.27001953125
+        }
+      ],
+      "last_prices": {
+        "MPC": 487.12469482421875,
+        "PSX": 296.7699890136719,
+        "VLO": 450.4200134277344,
+        "VEEV": 314.6000061035156,
+        "APA": 49.095001220703125
+      },
+      "last_processed_rebalance_date": "2026-10-19",
+      "started_at": "2026-10-19T14:13:08+00:00",
+      "monthly_volume": [
+        {
+          "year": 2026,
+          "month": 10,
+          "volume": 6102.0
+        }
+      ],
+      "next_rebalance_date": "2026-10-21",
+      "selected_tickers": [
+        "MPC",
+        "PSX",
+        "VLO",
+        "VEEV",
+        "APA"
+      ],
+      "selected_at": "2026-10-19",
+      "realized_pnl_cumulative": 0.0,
+      "last_updated_at": "2026-10-19T10:13:08-04:00"
+    }
+  },
+  "last_updated_at": "2026-10-19T14:13:08+00:00"
+}
