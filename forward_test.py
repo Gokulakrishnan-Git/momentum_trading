@@ -388,7 +388,7 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
                                      buy_execution_prices=buys, sell_execution_prices=sells)
 
     # Daily OHLC stop checks mirror the backtester, using the current session's
-    # developing high/low values. The next five-minute check sells after a trigger.
+    # developing high/low values. The next scheduled check sells after a trigger.
     if params["use_stop_loss"] and engine.positions:
         manager = (FixedPercentStopLoss(params["stop_loss_pct"])
                    if params["stop_loss_type"] == "fixed"

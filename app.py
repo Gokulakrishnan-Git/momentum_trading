@@ -380,7 +380,7 @@ with backtest_tab:
 with forward_tab:
     st.subheader("Forward paper tests")
     st.write("Each frozen test uses the backtest’s own momentum, MACD, RSI, eligibility, score threshold, score-weighted allocation, regime filter, stop-loss rules, and fee model. The first run after freezing starts at the next open session; it then holds until the selected rebalance schedule. Orders remain simulated.")
-    st.caption("GitHub Actions checks open market sessions every 5 minutes: S&P 500 (NYSE), NIFTY 500 (NSE), and TOPIX 500 (JPX). Fills use Yahoo Finance prices with configurable simulated latency and slippage. P&L is marked to the latest available quote. Refresh this tab to load the newest portfolio snapshot.")
+    st.caption("GitHub Actions checks open market sessions every minute: S&P 500 (NYSE), NIFTY 500 (NSE), and TOPIX 500 (JPX). Fills use Yahoo Finance prices with configurable simulated latency and slippage. P&L is marked to the latest available quote. Refresh this tab to load the newest portfolio snapshot.")
     if st.button("Refresh forward-test values"):
         st.rerun()
 
@@ -461,15 +461,14 @@ with forward_tab:
         function nextScheduledRun(after) {
           const candidate = new Date(after);
           candidate.setUTCSeconds(0, 0);
-          candidate.setUTCMinutes(Math.floor(candidate.getUTCMinutes() / 5) * 5);
-          if (candidate.getTime() <= after.getTime()) candidate.setUTCMinutes(candidate.getUTCMinutes() + 5);
+          if (candidate.getTime() <= after.getTime()) candidate.setUTCMinutes(candidate.getUTCMinutes() + 1);
           for (let i = 0; i < 5000; i++) {
             const day = candidate.getUTCDay();
             const hour = candidate.getUTCHours();
             if (day >= 1 && day <= 5 && ((hour >= 0 && hour <= 10) || (hour >= 13 && hour <= 21))) {
               return candidate;
             }
-            candidate.setUTCMinutes(candidate.getUTCMinutes() + 5);
+            candidate.setUTCMinutes(candidate.getUTCMinutes() + 1);
           }
           return candidate;
         }
@@ -490,7 +489,7 @@ with forward_tab:
       })();
     </script>
     """, height=38, scrolling=False)
-    st.caption("The countdown shows the next five-minute scheduled slot in the workflow's UTC schedule, displayed in IST. GitHub may start a scheduled run late.")
+    st.caption("The countdown shows the next one-minute scheduled slot in the workflow's UTC schedule, displayed in IST. GitHub may start a scheduled run late.")
     if not frozen_tests:
         st.caption("No forward tests are frozen yet. Freezing a test publishes it to GitHub Actions; you can create additional tests with different parameters at any time.")
     for test in frozen_tests:
