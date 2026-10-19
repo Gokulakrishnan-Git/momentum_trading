@@ -335,7 +335,7 @@ with backtest_tab:
 with forward_tab:
     st.subheader("Forward paper tests")
     st.write("Each frozen test uses the backtest’s own momentum, MACD, RSI, eligibility, score threshold, score-weighted allocation, regime filter, stop-loss rules, and fee model. The first run after freezing starts at the next open session; it then holds until the selected rebalance schedule. Orders remain simulated.")
-    st.caption("GitHub Actions checks market sessions every 30 minutes: S&P 500 (NYSE), NIFTY 500 (NSE), and TOPIX 500 (JPX). Fills use live Yahoo Finance prices with configurable simulated latency and slippage. P&L is marked to the latest available quote.")
+    st.caption("GitHub Actions checks market sessions every 30 minutes: S&P 500 (NYSE), NIFTY 500 (NSE), and TOPIX 500 (JPX). Fills use live Yahoo Finance prices with configurable simulated latency and slippage. P&L is marked to the latest available quote. Refresh this tab to load the newest portfolio snapshot.")
     if st.button("Refresh forward-test values"):
         st.rerun()
 

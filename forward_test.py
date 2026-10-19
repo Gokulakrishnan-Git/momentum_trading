@@ -219,8 +219,11 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
 
     holdings = list(test_state.get("positions", {}))
     quote_tickers = holdings + (list(selection.index.astype(str)) if selection is not None else [])
-    fallback_prices = {ticker: float(open_prices.loc[date, ticker])
-                       for ticker in quote_tickers if ticker in open_prices and pd.notna(open_prices.loc[date, ticker])}
+    fallback_prices = {ticker: float(value) for ticker, value in test_state.get("last_prices", {}).items()
+                       if ticker in quote_tickers and pd.notna(value)}
+    fallback_prices.update({ticker: float(open_prices.loc[date, ticker])
+                            for ticker in quote_tickers
+                            if ticker in open_prices and pd.notna(open_prices.loc[date, ticker])})
     prices = current_quotes(quote_tickers, fallback_prices)
     if not prices and holdings:
         prices = {ticker: float(value) for ticker, value in test_state.get("last_prices", {}).items()}
@@ -259,11 +262,8 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
                         for ticker in weights if ticker in prices}
                 sells = {ticker: prices[ticker] * (1 - params.get("simulated_slippage_bps", 5.0) / 10000)
                          for ticker in prices}
-                if buys:
-                    adjusted_weights = {ticker: weight for ticker, weight in weights.items() if ticker in buys}
-                    total = sum(adjusted_weights.values())
-                    adjusted_weights = {ticker: weight / total for ticker, weight in adjusted_weights.items()}
-                    engine.rebalance(adjusted_weights, price_row, date,
+                if len(buys) == len(weights):
+                    engine.rebalance(weights, price_row, date,
                                      buy_execution_prices=buys, sell_execution_prices=sells)
 
     # Daily OHLC stop checks mirror the backtester, using the current session's
