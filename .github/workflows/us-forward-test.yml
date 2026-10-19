@@ -4,7 +4,7 @@ on:
   # Every five minutes, offset from the hour to reduce scheduler congestion.
   # The runner applies exchange calendar and holiday/break checks before prices.
   schedule:
-    - cron: "2-59/5 0-10,13-21 * * 1-5"
+      - cron: "3-59/5 0-10,13-21 * * 1-5"
   push:
     branches: [main]
     paths:
