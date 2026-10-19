@@ -8,6 +8,7 @@ import os
 import subprocess
 import time
 import uuid
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import requests
@@ -22,6 +23,7 @@ ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "market_data"
 OUTPUT_DIR = ROOT / "backtest_output"
 FORWARD_CONFIG_PATH = ROOT / "forward_test.json"
+STARTUP_CHECK_PATH = ROOT / ".market_data_last_checked.json"
 WARMUP_DAYS = 400
 UNIVERSES = {
     "NIFTY500": {"label": "NIFTY 500", "market": "INDIA", "currency": "INR", "ticker": "^CRSLDX", "benchmark": "Nifty 500"},
@@ -55,6 +57,38 @@ def _latest_saved(universe: str) -> pd.Timestamp | None:
         if not frame.empty:
             latest.append(frame.index.max())
     return min(latest) if len(latest) == len(paths) else None
+
+
+def _last_market_check_date() -> date | None:
+    try:
+        value = json.loads(STARTUP_CHECK_PATH.read_text(encoding="utf-8"))
+        return date.fromisoformat(value["checked_date"])
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return None
+
+
+def _claim_market_data_check(today: date) -> bool:
+    """Claim the once-daily update so reloads and parallel sessions don't repeat it."""
+    lock_path = ROOT / f".market_data_check_{today.isoformat()}.lock"
+    if _last_market_check_date() == today:
+        return False
+    try:
+        with lock_path.open("x", encoding="utf-8") as lock:
+            lock.write(today.isoformat())
+    except FileExistsError:
+        return False
+    if _last_market_check_date() == today:
+        lock_path.unlink(missing_ok=True)
+        return False
+    return True
+
+
+def _finish_market_data_check(today: date) -> None:
+    lock_path = ROOT / f".market_data_check_{today.isoformat()}.lock"
+    temporary = STARTUP_CHECK_PATH.with_suffix(".tmp")
+    temporary.write_text(json.dumps({"checked_date": today.isoformat()}), encoding="utf-8")
+    os.replace(temporary, STARTUP_CHECK_PATH)
+    lock_path.unlink(missing_ok=True)
 
 
 def update_universe(universe: str, through: date) -> tuple[str, bool]:
@@ -216,15 +250,26 @@ st.set_page_config(page_title="Momentum Strategy Backtest", page_icon="📈", la
 st.markdown("<style>.block-container{max-width:1450px;padding-top:2rem}.hero{padding:1.5rem 1.8rem;border-radius:18px;background:linear-gradient(115deg,#10283f,#173f56);color:#f4f8fb;margin-bottom:1.2rem}.hero h1{margin:0 0 .35rem;font-size:2rem}.hero p{margin:0;color:#c6d9e4}[data-testid='stMetricValue'],[data-testid='stMetricValue'] div{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere;font-size:clamp(1.25rem,2.2vw,1.85rem)!important}</style>", unsafe_allow_html=True)
 st.markdown('<section class="hero"><h1>Momentum Strategy Backtest</h1><p>Run the notebook strategy against saved market data and export every report table.</p></section>', unsafe_allow_html=True)
 
-today = date.today()
+today = datetime.now(ZoneInfo("Asia/Kolkata")).date()
 yesterday = today - timedelta(days=1)
-if "startup_update" not in st.session_state:
-    messages = []
-    with st.spinner(f"Checking market data through {yesterday}…"):
-        for name in UNIVERSES:
-            msg, okay = update_universe(name, yesterday)
-            messages.append((name, msg, okay))
+if st.session_state.get("startup_update_date") != today:
+    if _last_market_check_date() == today:
+        messages = [(name, f"Daily OHLC check already completed for {today.isoformat()}.", True)
+                    for name in UNIVERSES]
+    elif _claim_market_data_check(today):
+        messages = []
+        try:
+            with st.spinner(f"Checking market data through {yesterday}…"):
+                for name in UNIVERSES:
+                    msg, okay = update_universe(name, yesterday)
+                    messages.append((name, msg, okay))
+        finally:
+            _finish_market_data_check(today)
+    else:
+        messages = [(name, "Today's market data check is already running in another session.", True)
+                    for name in UNIVERSES]
     st.session_state.startup_update = messages
+    st.session_state.startup_update_date = today
 for name, msg, okay in st.session_state.startup_update:
     (st.success if okay else st.warning)(f"{UNIVERSES[name]['label']}: {msg}")
 
@@ -254,7 +299,7 @@ with st.sidebar:
 backtest_tab, forward_tab = st.tabs(["Backtest", "Forward test"])
 
 with backtest_tab:
-    st.caption("OHLC files are adjusted prices from Yahoo Finance. At startup, the app checks all saved universes and appends any newer bars available through yesterday.")
+    st.caption("OHLC files are adjusted prices from Yahoo Finance. The app checks all saved universes once per day (IST) and appends any newer bars available through yesterday; reloading again that day skips the download check.")
     if run:
         if start > end:
             st.error("Start date must be on or before end date.")
@@ -336,6 +381,47 @@ with forward_tab:
     st.subheader("Forward paper tests")
     st.write("Each frozen test uses the backtest’s own momentum, MACD, RSI, eligibility, score threshold, score-weighted allocation, regime filter, stop-loss rules, and fee model. The first run after freezing starts at the next open session; it then holds until the selected rebalance schedule. Orders remain simulated.")
     st.caption("GitHub Actions checks open market sessions every 5 minutes: S&P 500 (NYSE), NIFTY 500 (NSE), and TOPIX 500 (JPX). Fills use Yahoo Finance prices with configurable simulated latency and slippage. P&L is marked to the latest available quote. Refresh this tab to load the newest portfolio snapshot.")
+    st.components.v1.html("""
+    <div id="actions-countdown" style="font: 15px sans-serif; color: #c8d1dc; padding: 5px 0"></div>
+    <script>
+      (() => {
+        const output = document.getElementById("actions-countdown");
+        const timeFormatter = new Intl.DateTimeFormat("en-IN", {
+          timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: false
+        });
+        function nextScheduledRun(after) {
+          const candidate = new Date(after);
+          candidate.setUTCSeconds(0, 0);
+          candidate.setUTCMinutes(Math.floor(candidate.getUTCMinutes() / 5) * 5);
+          if (candidate.getTime() <= after.getTime()) candidate.setUTCMinutes(candidate.getUTCMinutes() + 5);
+          for (let i = 0; i < 5000; i++) {
+            const day = candidate.getUTCDay();
+            const hour = candidate.getUTCHours();
+            if (day >= 1 && day <= 5 && ((hour >= 0 && hour <= 10) || (hour >= 13 && hour <= 21))) {
+              return candidate;
+            }
+            candidate.setUTCMinutes(candidate.getUTCMinutes() + 5);
+          }
+          return candidate;
+        }
+        let target = nextScheduledRun(new Date());
+        function render() {
+          let remaining = target.getTime() - Date.now();
+          if (remaining <= 0) {
+            target = nextScheduledRun(new Date());
+            remaining = target.getTime() - Date.now();
+          }
+          const totalSeconds = Math.max(0, Math.floor(remaining / 1000));
+          const minutes = Math.floor(totalSeconds / 60);
+          const seconds = String(totalSeconds % 60).padStart(2, "0");
+          output.textContent = `Next GitHub Actions check scheduled in ${minutes}m ${seconds}s · ${timeFormatter.format(target)} IST`;
+        }
+        render();
+        setInterval(render, 1000);
+      })();
+    </script>
+    """, height=38, scrolling=False)
+    st.caption("The countdown shows the next five-minute scheduled slot in the workflow's UTC schedule, displayed in IST. GitHub may start a scheduled run late.")
     if st.button("Refresh forward-test values"):
         st.rerun()
 

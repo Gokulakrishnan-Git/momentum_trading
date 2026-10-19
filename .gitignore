@@ -1,5 +1,7 @@
 .venv/
 .forward_market_cache/
+.market_data_last_checked.json
+.market_data_check_*.lock
 __pycache__/
 *.py[cod]
 *.tmp

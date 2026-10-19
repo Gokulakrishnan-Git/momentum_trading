@@ -4,7 +4,7 @@
 
 Double-click **Trading App.bat**. On first launch, it creates a local `.venv`, installs the packages in `requirements.txt`, and opens the app in your browser. Later launches reuse that environment and start the app directly. The old **Start Backtest App.bat** filename remains as a compatibility launcher.
 
-The app reads the saved files under `market_data/`, then attempts an incremental Yahoo Finance update through yesterday for NIFTY 500, S&P 500, and TOPIX 500. It only requests the tickers already present in each universe's saved close-price file, and merges new adjusted OHLC bars and benchmark closes into the existing CSVs. Internet access is needed for initial package installation and data updates.
+The app reads the saved files under `market_data/` and checks for incremental Yahoo Finance updates through yesterday once per day (IST) for NIFTY 500, S&P 500, and TOPIX 500. Reloads during the same day skip this check. It only requests the tickers already present in each universe's saved close-price file, and merges new adjusted OHLC bars and benchmark closes into the existing CSVs. Internet access is needed for initial package installation and data updates.
 
 ## Backtest options and reports
 
