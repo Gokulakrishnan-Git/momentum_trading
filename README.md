@@ -6,6 +6,12 @@ Double-click **Trading App.bat**. On first launch, it creates a local `.venv`, i
 
 The app reads the saved files under `market_data/` and checks for incremental Yahoo Finance updates through yesterday once per day (IST) for NIFTY 500, S&P 500, and TOPIX 500. Reloads during the same day skip this check. It only requests the tickers already present in each universe's saved close-price file, and merges new adjusted OHLC bars and benchmark closes into the existing CSVs. Internet access is needed for initial package installation and data updates.
 
+## Deploy to Streamlit Community Cloud
+
+The app can be hosted from this public GitHub repository and opened from a phone. In [Streamlit Community Cloud](https://share.streamlit.io/), sign in with GitHub, choose **Create app**, and select repository `Gokulakrishnan-Git/momentum_trading`, branch `main`, and main file `app.py`. Deploying reads the root `requirements.txt`; new commits to the selected branch are picked up by the hosted app. The Forward test tab refreshes portfolio state every 60 seconds while it is open.
+
+The hosted page can display paper-test state from GitHub Actions. Freezing, pausing, or resuming a test publishes configuration by pushing to GitHub, which requires write credentials; configure a GitHub token as a Streamlit secret before using those controls in the hosted app. Never put that token in the repository or source code.
+
 ## Backtest options and reports
 
 Choose a universe, date range, regime filter, allowed regimes, rebalance frequency, holding count, stop-loss settings, fee toggle, and starting capital. The end date defaults to yesterday. The report shows strategy metrics and equity curves, and provides CSV downloads for trade log, top five trade frequency, strategy curve, benchmark curve, monthly returns, backtest results, and regime.

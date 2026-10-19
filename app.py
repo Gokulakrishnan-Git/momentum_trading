@@ -377,189 +377,191 @@ with backtest_tab:
                 st.download_button(f"Download {name} CSV", csv_bytes(frame, index=name in ("Strategy curve", "Benchmark curve", "Monthly returns", "Regime")), file_name=f"{report_universe}_{slug[name]}.csv", mime="text/csv", key=f"download_{slug[name]}")
 
 
-with forward_tab:
-    st.subheader("Forward paper tests")
-    st.write("Each frozen test uses the backtest’s own momentum, MACD, RSI, eligibility, score threshold, score-weighted allocation, regime filter, stop-loss rules, and fee model. The first run after freezing starts at the next open session; it then holds until the selected rebalance schedule. Orders remain simulated.")
-    st.caption("GitHub Actions checks open market sessions every minute: S&P 500 (NYSE), NIFTY 500 (NSE), and TOPIX 500 (JPX). Fills use Yahoo Finance prices with configurable simulated latency and slippage. P&L is marked to the latest available quote. Refresh this tab to load the newest portfolio snapshot.")
-    if st.button("Refresh forward-test values"):
-        st.rerun()
+@st.fragment(run_every="60s")
+def render_forward_tab():
+        st.subheader("Forward paper tests")
+        st.write("Each frozen test uses the backtest’s own momentum, MACD, RSI, eligibility, score threshold, score-weighted allocation, regime filter, stop-loss rules, and fee model. The first run after freezing starts at the next open session; it then holds until the selected rebalance schedule. Orders remain simulated.")
+        st.caption("GitHub Actions checks open market sessions every minute: S&P 500 (NYSE), NIFTY 500 (NSE), and TOPIX 500 (JPX). Fills use Yahoo Finance prices with configurable simulated latency and slippage. P&L is marked to the latest available quote. This tab reloads the latest GitHub snapshot automatically every 60 seconds while open.")
 
-    config = read_forward_config() or {}
-    frozen_tests = config.get("tests", []) if isinstance(config.get("tests"), list) else []
-    active_count = sum(test.get("status", "active") == "active" for test in frozen_tests)
-    st.markdown("### Freeze a new test")
-    with st.form("forward_setup"):
-        f1, f2, f3 = st.columns(3)
-        with f1:
-            f_name = st.text_input("Test name", value=f"Forward test {len(frozen_tests) + 1}")
-            f_universe = st.selectbox("Market universe", list(UNIVERSES), index=1,
-                                      format_func=lambda key: UNIVERSES[key]["label"])
-            f_capital = st.number_input("Starting capital", min_value=1, value=1_000_000, step=100_000)
-        with f2:
-            f_top_n = st.number_input("Number of holdings", min_value=1, max_value=100, value=5)
-            f_frequency_label = st.selectbox("Rebalance frequency", ["Monthly", "Every 2 weeks", "Weekly", "Every N trading days"])
-            f_frequency_days = st.number_input("Trading days between rebalances", min_value=1, max_value=252, value=3)
-            st.caption("Used when rebalance frequency is Every N trading days.")
-        with f3:
-            f_use_regime = st.toggle("Use market regime filter", value=True)
-            f_allowed = st.multiselect("Allowed regimes", ["Bull", "Bear"], default=["Bull"], disabled=not f_use_regime)
-            f_use_stop = st.toggle("Use stop loss", value=False)
-            f_stop_type = st.selectbox("Stop type", ["Fixed percent", "Trailing percent"], disabled=not f_use_stop)
-            f_stop_pct = st.slider("Stop distance (%)", min_value=1, max_value=50, value=8) / 100
-            st.caption("Used when stop loss is enabled.")
-        f4, f5 = st.columns(2)
-        with f4:
-            f_charges = st.toggle("Include backtest fee model", value=True)
-        with f5:
-            f_latency = st.number_input("Simulated order latency (seconds)", min_value=0.0, max_value=10.0, value=1.0, step=0.25)
-            f_slippage = st.number_input("Adverse slippage (basis points)", min_value=0.0, max_value=100.0, value=5.0, step=1.0)
-        freeze = st.form_submit_button("Freeze and start test", type="primary")
+        config = read_forward_config() or {}
+        frozen_tests = config.get("tests", []) if isinstance(config.get("tests"), list) else []
+        active_count = sum(test.get("status", "active") == "active" for test in frozen_tests)
+        st.markdown("### Freeze a new test")
+        with st.form("forward_setup"):
+            f1, f2, f3 = st.columns(3)
+            with f1:
+                f_name = st.text_input("Test name", value=f"Forward test {len(frozen_tests) + 1}")
+                f_universe = st.selectbox("Market universe", list(UNIVERSES), index=1,
+                                          format_func=lambda key: UNIVERSES[key]["label"])
+                f_capital = st.number_input("Starting capital", min_value=1, value=1_000_000, step=100_000)
+            with f2:
+                f_top_n = st.number_input("Number of holdings", min_value=1, max_value=100, value=5)
+                f_frequency_label = st.selectbox("Rebalance frequency", ["Monthly", "Every 2 weeks", "Weekly", "Every N trading days"])
+                f_frequency_days = st.number_input("Trading days between rebalances", min_value=1, max_value=252, value=3)
+                st.caption("Used when rebalance frequency is Every N trading days.")
+            with f3:
+                f_use_regime = st.toggle("Use market regime filter", value=True)
+                f_allowed = st.multiselect("Allowed regimes", ["Bull", "Bear"], default=["Bull"], disabled=not f_use_regime)
+                f_use_stop = st.toggle("Use stop loss", value=False)
+                f_stop_type = st.selectbox("Stop type", ["Fixed percent", "Trailing percent"], disabled=not f_use_stop)
+                f_stop_pct = st.slider("Stop distance (%)", min_value=1, max_value=50, value=8) / 100
+                st.caption("Used when stop loss is enabled.")
+            f4, f5 = st.columns(2)
+            with f4:
+                f_charges = st.toggle("Include backtest fee model", value=True)
+            with f5:
+                f_latency = st.number_input("Simulated order latency (seconds)", min_value=0.0, max_value=10.0, value=1.0, step=0.25)
+                f_slippage = st.number_input("Adverse slippage (basis points)", min_value=0.0, max_value=100.0, value=5.0, step=1.0)
+            freeze = st.form_submit_button("Freeze and start test", type="primary")
 
-    if freeze:
-        if not f_name.strip():
-            st.error("Enter a name for this forward test.")
-        elif f_use_regime and not f_allowed:
-            st.error("Choose at least one allowed regime, or turn off the regime filter.")
-        else:
-            frequency = int(f_frequency_days) if f_frequency_label == "Every N trading days" else {
-                "Monthly": "monthly", "Every 2 weeks": "2weeks", "Weekly": "weekly"
-            }[f_frequency_label]
-            new_test = {
-                "id": uuid.uuid4().hex[:12], "name": f_name.strip(), "universe": f_universe,
-                "status": "active", "frozen_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                "parameters": {
-                    "top_n": int(f_top_n), "rebalance_frequency": frequency,
-                    "use_regime_filter": f_use_regime, "allowed_regimes": f_allowed or ["Bull"],
-                    "use_stop_loss": f_use_stop,
-                    "stop_loss_type": "fixed" if f_stop_type == "Fixed percent" else "trailing",
-                    "stop_loss_pct": float(f_stop_pct), "use_charges": f_charges,
-                    "initial_capital": float(f_capital),
-                    "simulated_latency_seconds": float(f_latency),
-                    "simulated_slippage_bps": float(f_slippage),
-                },
-            }
-            updated_config = {"schema_version": 2, "tests": [*frozen_tests, new_test]}
-            write_forward_config(updated_config)
-            frozen_tests.append(new_test)
-            active_count += 1
-            pushed, publish_message = publish_forward_config()
-            (st.success if pushed else st.error)(publish_message)
-            if pushed:
-                st.info("The test is active. If its market is closed, its first portfolio will be created at the next market open.")
+        if freeze:
+            if not f_name.strip():
+                st.error("Enter a name for this forward test.")
+            elif f_use_regime and not f_allowed:
+                st.error("Choose at least one allowed regime, or turn off the regime filter.")
+            else:
+                frequency = int(f_frequency_days) if f_frequency_label == "Every N trading days" else {
+                    "Monthly": "monthly", "Every 2 weeks": "2weeks", "Weekly": "weekly"
+                }[f_frequency_label]
+                new_test = {
+                    "id": uuid.uuid4().hex[:12], "name": f_name.strip(), "universe": f_universe,
+                    "status": "active", "frozen_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                    "parameters": {
+                        "top_n": int(f_top_n), "rebalance_frequency": frequency,
+                        "use_regime_filter": f_use_regime, "allowed_regimes": f_allowed or ["Bull"],
+                        "use_stop_loss": f_use_stop,
+                        "stop_loss_type": "fixed" if f_stop_type == "Fixed percent" else "trailing",
+                        "stop_loss_pct": float(f_stop_pct), "use_charges": f_charges,
+                        "initial_capital": float(f_capital),
+                        "simulated_latency_seconds": float(f_latency),
+                        "simulated_slippage_bps": float(f_slippage),
+                    },
+                }
+                updated_config = {"schema_version": 2, "tests": [*frozen_tests, new_test]}
+                write_forward_config(updated_config)
+                frozen_tests.append(new_test)
+                active_count += 1
+                pushed, publish_message = publish_forward_config()
+                (st.success if pushed else st.error)(publish_message)
+                if pushed:
+                    st.info("The test is active. If its market is closed, its first portfolio will be created at the next market open.")
 
-    forward_state = read_forward_state()
-    states_by_id = forward_state.get("tests", {})
-    st.markdown(f"### Frozen tests · {active_count} active")
-    st.components.v1.html("""
-    <div id="actions-countdown" style="font: 15px sans-serif; color: #c8d1dc; padding: 5px 0"></div>
-    <script>
-      (() => {
-        const output = document.getElementById("actions-countdown");
-        const timeFormatter = new Intl.DateTimeFormat("en-IN", {
-          timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: false
-        });
-        function nextScheduledRun(after) {
-          const candidate = new Date(after);
-          candidate.setUTCSeconds(0, 0);
-          if (candidate.getTime() <= after.getTime()) candidate.setUTCMinutes(candidate.getUTCMinutes() + 1);
-          for (let i = 0; i < 5000; i++) {
-            const day = candidate.getUTCDay();
-            const hour = candidate.getUTCHours();
-            if (day >= 1 && day <= 5 && ((hour >= 0 && hour <= 10) || (hour >= 13 && hour <= 21))) {
+        forward_state = read_forward_state()
+        states_by_id = forward_state.get("tests", {})
+        st.markdown(f"### Frozen tests · {active_count} active")
+        st.components.v1.html("""
+        <div id="actions-countdown" style="font: 15px sans-serif; color: #c8d1dc; padding: 5px 0"></div>
+        <script>
+          (() => {
+            const output = document.getElementById("actions-countdown");
+            const timeFormatter = new Intl.DateTimeFormat("en-IN", {
+              timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: false
+            });
+            function nextScheduledRun(after) {
+              const candidate = new Date(after);
+              candidate.setUTCSeconds(0, 0);
+              if (candidate.getTime() <= after.getTime()) candidate.setUTCMinutes(candidate.getUTCMinutes() + 1);
+              for (let i = 0; i < 5000; i++) {
+                const day = candidate.getUTCDay();
+                const hour = candidate.getUTCHours();
+                if (day >= 1 && day <= 5 && ((hour >= 0 && hour <= 10) || (hour >= 13 && hour <= 21))) {
+                  return candidate;
+                }
+                candidate.setUTCMinutes(candidate.getUTCMinutes() + 1);
+              }
               return candidate;
             }
-            candidate.setUTCMinutes(candidate.getUTCMinutes() + 1);
-          }
-          return candidate;
-        }
-        let target = nextScheduledRun(new Date());
-        function render() {
-          let remaining = target.getTime() - Date.now();
-          if (remaining <= 0) {
-            target = nextScheduledRun(new Date());
-            remaining = target.getTime() - Date.now();
-          }
-          const totalSeconds = Math.max(0, Math.floor(remaining / 1000));
-          const minutes = Math.floor(totalSeconds / 60);
-          const seconds = String(totalSeconds % 60).padStart(2, "0");
-          output.textContent = `Next GitHub Actions check scheduled in ${minutes}m ${seconds}s · ${timeFormatter.format(target)} IST`;
-        }
-        render();
-        setInterval(render, 1000);
-      })();
-    </script>
-    """, height=38, scrolling=False)
-    st.caption("The countdown shows the next one-minute scheduled slot in the workflow's UTC schedule, displayed in IST. GitHub may start a scheduled run late.")
-    if not frozen_tests:
-        st.caption("No forward tests are frozen yet. Freezing a test publishes it to GitHub Actions; you can create additional tests with different parameters at any time.")
-    for test in frozen_tests:
-        test_id = test.get("id", "unknown")
-        params = test.get("parameters", {})
-        test_state = states_by_id.get(test_id, {})
-        latest = (test_state.get("snapshots") or [{}])[-1]
-        currency = UNIVERSES.get(test.get("universe"), {}).get("currency", "USD")
-        status = test.get("status", "active")
-        st.markdown(f"#### {test.get('name', test_id)} · {test.get('universe', '')} · {status.title()}")
-        if st.button("Pause test" if status == "active" else "Resume test", key=f"toggle_test_{test_id}"):
-            test["status"] = "paused" if status == "active" else "active"
-            write_forward_config({"schema_version": 2, "tests": frozen_tests})
-            saved, message = publish_forward_config()
-            (st.success if saved else st.error)(message)
-            if saved:
-                st.rerun()
-        open_now, market_message = market_state(datetime.now(timezone.utc), test.get("universe", "SP500"))
-        (st.success if open_now else st.info)(market_message)
-        st.caption(f"{params.get('top_n', 5)} holdings · {params.get('rebalance_frequency', 'monthly')} rebalance · Frozen {test.get('frozen_at', 'unknown')}")
-        if latest:
-            c1, c2, c3 = st.columns(3)
-            c1.metric("Portfolio value", f"{currency} {float(latest.get('portfolio_value', 0)):,.2f}")
-            c2.metric("Total P&L", f"{currency} {float(latest.get('pnl', 0)):,.2f}", f"{float(latest.get('pnl_pct', 0)):.2%}")
-            c3.metric("Unrealized P&L", f"{currency} {float(latest.get('unrealized_pnl', 0)):,.2f}")
-            c4, c5, c6 = st.columns(3)
-            c4.metric("Realized P&L", f"{currency} {float(latest.get('realized_pnl', 0)):,.2f}")
-            c5.metric("Cash", f"{currency} {float(latest.get('cash', 0)):,.2f}")
-            c6.metric("Holdings", int(latest.get("holdings", 0)))
-            snapshots = test_state.get("snapshots", [])
-            st.metric("Next rebalance date", test_state.get("next_rebalance_date") or "Pending")
-            initial_capital = float(params.get("initial_capital", 0))
-            curve_rows = [{
-                "Time": pd.to_datetime(row["timestamp"], utc=True).tz_convert("Asia/Kolkata"),
-                "Portfolio value": float(row["portfolio_value"]),
-                "Portfolio P&L": float(row["portfolio_value"]) - initial_capital,
-                "Portfolio return (%)": 100 * (float(row["portfolio_value"]) / initial_capital - 1),
-                "Benchmark value": row.get("benchmark_value"),
-            } for row in snapshots if row.get("timestamp") and initial_capital > 0]
-            if curve_rows:
-                curve = pd.DataFrame(curve_rows).set_index("Time")
-                benchmark_values = pd.to_numeric(curve["Benchmark value"], errors="coerce")
-                benchmark_values = benchmark_values.dropna()
-                if not benchmark_values.empty and float(benchmark_values.iloc[0]) > 0:
-                    curve["S&P 500 return (%)"] = 100 * (pd.to_numeric(curve["Benchmark value"], errors="coerce") / float(benchmark_values.iloc[0]) - 1)
-                curve = curve.drop(columns=["Benchmark value", "Portfolio value"])
-                st.subheader("Portfolio P&L")
-                st.caption(f"Cumulative paper P&L from the frozen starting capital, in {currency}.")
-                st.area_chart(curve[["Portfolio P&L"]], height=220)
-                st.subheader("Portfolio return vs S&P 500")
-                return_series = ["Portfolio return (%)"]
-                if "S&P 500 return (%)" in curve:
-                    return_series.append("S&P 500 return (%)")
-                st.line_chart(curve[return_series], height=260)
-                st.caption("Returns are percentages from the starting capital / first S&P 500 reading. The Total P&L metric above shows both the currency amount and percentage.")
-            selected_tickers = test_state.get("selected_tickers") or list(test_state.get("positions", {}))
-            if selected_tickers:
-                st.markdown(f"**Top {len(selected_tickers)} selected** · {test_state.get('selected_at', 'selection date pending')}")
-                positions = test_state.get("positions", {})
-                last_prices = latest.get("prices", {})
-                selected_rows = [{
-                    "Rank": rank, "Ticker": ticker,
-                    "Shares held": positions.get(ticker, {}).get("shares", 0),
-                    "Latest price": last_prices.get(ticker),
-                } for rank, ticker in enumerate(selected_tickers, 1)]
-                st.dataframe(pd.DataFrame(selected_rows), use_container_width=True, hide_index=True)
-            st.caption(f"Last update: {test_state.get('last_updated_at', 'pending')}")
-            if test_state.get("trades"):
-                with st.expander(f"Recent simulated trades · {len(test_state['trades'])} total"):
-                    st.dataframe(pd.DataFrame(test_state["trades"][-20:]), use_container_width=True, hide_index=True)
-        else:
-            st.info("Waiting for the next market-open Actions run to build the first portfolio.")
+            let target = nextScheduledRun(new Date());
+            function render() {
+              let remaining = target.getTime() - Date.now();
+              if (remaining <= 0) {
+                target = nextScheduledRun(new Date());
+                remaining = target.getTime() - Date.now();
+              }
+              const totalSeconds = Math.max(0, Math.floor(remaining / 1000));
+              const minutes = Math.floor(totalSeconds / 60);
+              const seconds = String(totalSeconds % 60).padStart(2, "0");
+              output.textContent = `Next GitHub Actions check scheduled in ${minutes}m ${seconds}s · ${timeFormatter.format(target)} IST`;
+            }
+            render();
+            setInterval(render, 1000);
+          })();
+        </script>
+        """, height=38, scrolling=False)
+        st.caption("The countdown shows the next one-minute scheduled slot in the workflow's UTC schedule, displayed in IST. GitHub may start a scheduled run late.")
+        if not frozen_tests:
+            st.caption("No forward tests are frozen yet. Freezing a test publishes it to GitHub Actions; you can create additional tests with different parameters at any time.")
+        for test in frozen_tests:
+            test_id = test.get("id", "unknown")
+            params = test.get("parameters", {})
+            test_state = states_by_id.get(test_id, {})
+            latest = (test_state.get("snapshots") or [{}])[-1]
+            currency = UNIVERSES.get(test.get("universe"), {}).get("currency", "USD")
+            status = test.get("status", "active")
+            st.markdown(f"#### {test.get('name', test_id)} · {test.get('universe', '')} · {status.title()}")
+            if st.button("Pause test" if status == "active" else "Resume test", key=f"toggle_test_{test_id}"):
+                test["status"] = "paused" if status == "active" else "active"
+                write_forward_config({"schema_version": 2, "tests": frozen_tests})
+                saved, message = publish_forward_config()
+                (st.success if saved else st.error)(message)
+                if saved:
+                    st.rerun()
+            open_now, market_message = market_state(datetime.now(timezone.utc), test.get("universe", "SP500"))
+            (st.success if open_now else st.info)(market_message)
+            st.caption(f"{params.get('top_n', 5)} holdings · {params.get('rebalance_frequency', 'monthly')} rebalance · Frozen {test.get('frozen_at', 'unknown')}")
+            if latest:
+                c1, c2, c3 = st.columns(3)
+                c1.metric("Portfolio value", f"{currency} {float(latest.get('portfolio_value', 0)):,.2f}")
+                c2.metric("Total P&L", f"{currency} {float(latest.get('pnl', 0)):,.2f}", f"{float(latest.get('pnl_pct', 0)):.2%}")
+                c3.metric("Unrealized P&L", f"{currency} {float(latest.get('unrealized_pnl', 0)):,.2f}")
+                c4, c5, c6 = st.columns(3)
+                c4.metric("Realized P&L", f"{currency} {float(latest.get('realized_pnl', 0)):,.2f}")
+                c5.metric("Cash", f"{currency} {float(latest.get('cash', 0)):,.2f}")
+                c6.metric("Holdings", int(latest.get("holdings", 0)))
+                snapshots = test_state.get("snapshots", [])
+                st.metric("Next rebalance date", test_state.get("next_rebalance_date") or "Pending")
+                initial_capital = float(params.get("initial_capital", 0))
+                curve_rows = [{
+                    "Time": pd.to_datetime(row["timestamp"], utc=True).tz_convert("Asia/Kolkata"),
+                    "Portfolio value": float(row["portfolio_value"]),
+                    "Portfolio P&L": float(row["portfolio_value"]) - initial_capital,
+                    "Portfolio return (%)": 100 * (float(row["portfolio_value"]) / initial_capital - 1),
+                    "Benchmark value": row.get("benchmark_value"),
+                } for row in snapshots if row.get("timestamp") and initial_capital > 0]
+                if curve_rows:
+                    curve = pd.DataFrame(curve_rows).set_index("Time")
+                    benchmark_values = pd.to_numeric(curve["Benchmark value"], errors="coerce")
+                    benchmark_values = benchmark_values.dropna()
+                    if not benchmark_values.empty and float(benchmark_values.iloc[0]) > 0:
+                        curve["S&P 500 return (%)"] = 100 * (pd.to_numeric(curve["Benchmark value"], errors="coerce") / float(benchmark_values.iloc[0]) - 1)
+                    curve = curve.drop(columns=["Benchmark value", "Portfolio value"])
+                    st.subheader("Portfolio P&L")
+                    st.caption(f"Cumulative paper P&L from the frozen starting capital, in {currency}.")
+                    st.area_chart(curve[["Portfolio P&L"]], height=220)
+                    st.subheader("Portfolio return vs S&P 500")
+                    return_series = ["Portfolio return (%)"]
+                    if "S&P 500 return (%)" in curve:
+                        return_series.append("S&P 500 return (%)")
+                    st.line_chart(curve[return_series], height=260)
+                    st.caption("Returns are percentages from the starting capital / first S&P 500 reading. The Total P&L metric above shows both the currency amount and percentage.")
+                selected_tickers = test_state.get("selected_tickers") or list(test_state.get("positions", {}))
+                if selected_tickers:
+                    st.markdown(f"**Top {len(selected_tickers)} selected** · {test_state.get('selected_at', 'selection date pending')}")
+                    positions = test_state.get("positions", {})
+                    last_prices = latest.get("prices", {})
+                    selected_rows = [{
+                        "Rank": rank, "Ticker": ticker,
+                        "Shares held": positions.get(ticker, {}).get("shares", 0),
+                        "Latest price": last_prices.get(ticker),
+                    } for rank, ticker in enumerate(selected_tickers, 1)]
+                    st.dataframe(pd.DataFrame(selected_rows), use_container_width=True, hide_index=True)
+                st.caption(f"Last update: {test_state.get('last_updated_at', 'pending')}")
+                if test_state.get("trades"):
+                    with st.expander(f"Recent simulated trades · {len(test_state['trades'])} total"):
+                        st.dataframe(pd.DataFrame(test_state["trades"][-20:]), use_container_width=True, hide_index=True)
+            else:
+                st.info("Waiting for the next market-open Actions run to build the first portfolio.")
 
+
+with forward_tab:
+    render_forward_tab()

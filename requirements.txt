@@ -5,4 +5,4 @@ seaborn
 requests
 yfinance
 pandas_market_calendars
-streamlit
+streamlit>=1.37,<2
