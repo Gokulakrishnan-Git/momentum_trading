@@ -353,14 +353,15 @@ with forward_tab:
         with f2:
             f_top_n = st.number_input("Number of holdings", min_value=1, max_value=100, value=5)
             f_frequency_label = st.selectbox("Rebalance frequency", ["Monthly", "Every 2 weeks", "Weekly", "Every N trading days"])
-            f_frequency_days = st.number_input("Trading days between rebalances", min_value=1, max_value=252, value=3,
-                                               disabled=f_frequency_label != "Every N trading days")
+            f_frequency_days = st.number_input("Trading days between rebalances", min_value=1, max_value=252, value=3)
+            st.caption("Used when rebalance frequency is Every N trading days.")
         with f3:
             f_use_regime = st.toggle("Use market regime filter", value=True)
             f_allowed = st.multiselect("Allowed regimes", ["Bull", "Bear"], default=["Bull"], disabled=not f_use_regime)
             f_use_stop = st.toggle("Use stop loss", value=False)
             f_stop_type = st.selectbox("Stop type", ["Fixed percent", "Trailing percent"], disabled=not f_use_stop)
-            f_stop_pct = st.slider("Stop distance (%)", min_value=1, max_value=50, value=8, disabled=not f_use_stop) / 100
+            f_stop_pct = st.slider("Stop distance (%)", min_value=1, max_value=50, value=8) / 100
+            st.caption("Used when stop loss is enabled.")
         f4, f5 = st.columns(2)
         with f4:
             f_charges = st.toggle("Include backtest fee model", value=True)
