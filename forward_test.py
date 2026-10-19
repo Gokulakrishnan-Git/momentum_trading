@@ -39,6 +39,7 @@ def market_state(now: datetime, universe: str = "SP500") -> tuple[bool, str]:
     if now.tzinfo is None:
         now = now.replace(tzinfo=timezone.utc)
     local = now.astimezone(ZoneInfo(cfg["timezone"]))
+    display_tz = ZoneInfo("Asia/Kolkata")
     calendar = mcal.get_calendar(cfg["calendar"])
     session = calendar.schedule(start_date=local.date(), end_date=local.date())
     if session.empty:
@@ -48,16 +49,18 @@ def market_state(now: datetime, universe: str = "SP500") -> tuple[bool, str]:
     opening = pd.Timestamp(row["market_open"]).to_pydatetime().astimezone(local.tzinfo)
     closing = pd.Timestamp(row["market_close"]).to_pydatetime().astimezone(local.tzinfo)
     if local < opening:
-        return False, f"{universe}: market closed. Opens at {opening:%H:%M %Z}."
+        return False, f"{universe}: market closed. Opens at {opening.astimezone(display_tz):%H:%M IST}."
     if local >= closing:
-        return False, f"{universe}: market closed. Closed at {closing:%H:%M %Z}."
+        return False, f"{universe}: market closed. Closed at {closing.astimezone(display_tz):%H:%M IST}."
     break_start, break_end = row.get("break_start"), row.get("break_end")
     if pd.notna(break_start) and pd.notna(break_end):
         pause_start = pd.Timestamp(break_start).to_pydatetime().astimezone(local.tzinfo)
         pause_end = pd.Timestamp(break_end).to_pydatetime().astimezone(local.tzinfo)
         if pause_start <= local < pause_end:
-            return False, f"{universe}: market is on its scheduled break until {pause_end:%H:%M %Z}."
-    return True, f"{universe}: market open · {opening:%H:%M}–{closing:%H:%M %Z}."
+            return False, f"{universe}: market is on its scheduled break until {pause_end.astimezone(display_tz):%H:%M IST}."
+    opening_ist = opening.astimezone(display_tz)
+    closing_ist = closing.astimezone(display_tz)
+    return True, f"{universe}: market open · {opening_ist:%H:%M}–{closing_ist:%H:%M} IST."
 
 
 def _clean_frame(frame: pd.DataFrame) -> pd.DataFrame:
