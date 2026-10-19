@@ -12,7 +12,7 @@ if not exist ".venv\Scripts\python.exe" (
     if errorlevel 1 goto failed
 )
 
-".venv\Scripts\python.exe" -c "import numpy, pandas, matplotlib, seaborn, requests, yfinance, streamlit" >nul 2>nul
+".venv\Scripts\python.exe" -c "import numpy, pandas, matplotlib, seaborn, requests, yfinance, pandas_market_calendars, streamlit" >nul 2>nul
 if errorlevel 1 (
     ".venv\Scripts\python.exe" -m pip install --disable-pip-version-check -r requirements.txt
     if errorlevel 1 goto failed
