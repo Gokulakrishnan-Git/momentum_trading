@@ -1,4 +1,27 @@
 {
   "schema_version": 2,
-  "tests": []
+  "tests": [
+    {
+      "id": "11276352bde9",
+      "name": "Forward test 1",
+      "universe": "SP500",
+      "status": "active",
+      "frozen_at": "2026-10-19T08:31:10+00:00",
+      "parameters": {
+        "top_n": 5,
+        "rebalance_frequency": 3,
+        "use_regime_filter": false,
+        "allowed_regimes": [
+          "Bull"
+        ],
+        "use_stop_loss": false,
+        "stop_loss_type": "fixed",
+        "stop_loss_pct": 0.08,
+        "use_charges": true,
+        "initial_capital": 1000000.0,
+        "simulated_latency_seconds": 1.0,
+        "simulated_slippage_bps": 5.0
+      }
+    }
+  ]
 }
