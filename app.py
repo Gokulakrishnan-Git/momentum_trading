@@ -381,7 +381,7 @@ with backtest_tab:
 def render_forward_tab():
         st.subheader("Forward paper tests")
         st.write("Each frozen test uses the backtest’s own momentum, MACD, RSI, eligibility, score threshold, score-weighted allocation, regime filter, stop-loss rules, and fee model. The first run after freezing starts at the next open session; it then holds until the selected rebalance schedule. Orders remain simulated.")
-        st.caption("GitHub Actions checks open market sessions every five minutes: S&P 500 (NYSE), NIFTY 500 (NSE), and TOPIX 500 (JPX). Fills use Yahoo Finance prices with configurable simulated latency and slippage. P&L is marked to the latest available quote. This tab reloads the latest GitHub snapshot automatically every 60 seconds while open.")
+        st.caption("GitHub Actions checks every five minutes. During open sessions it can rebalance; while a market is closed it refreshes portfolio value from the latest available Yahoo Finance price without trading. Fills use configurable simulated latency and slippage. This tab reloads the latest GitHub snapshot automatically every 60 seconds while open.")
 
         config = read_forward_config() or {}
         frozen_tests = config.get("tests", []) if isinstance(config.get("tests"), list) else []

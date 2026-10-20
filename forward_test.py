@@ -189,7 +189,9 @@ def current_quotes(tickers: list[str], fallback: dict[str, float]) -> tuple[dict
     result = dict(fallback)
     if not tickers:
         return result, {}, {}
-    bars = yf.download(tickers=tickers, period="1d", interval="1m", auto_adjust=True,
+    # Five days lets closed-session runs pick up the most recent trading
+    # session's last print (Yahoo's 1m history is too short-lived for that).
+    bars = yf.download(tickers=tickers, period="5d", interval="5m", auto_adjust=True,
                        prepost=False, progress=False, threads=True, group_by="column")
     if bars is None or bars.empty:
         return result, {}, {}
@@ -214,6 +216,58 @@ def current_quotes(tickers: list[str], fallback: dict[str, float]) -> tuple[dict
             if not values.empty:
                 intraday_lows[ticker] = float(values.min())
     return result, intraday_highs, intraday_lows
+
+
+def mark_closed_market(test: dict, test_state: dict, history: dict, now: datetime) -> dict:
+    """Refresh valuation from the latest available quote without trading."""
+    positions = test_state.get("positions", {})
+    cfg = history["config"]
+    tickers = list(positions)
+    fallback = {ticker: float(value) for ticker, value in test_state.get("last_prices", {}).items()
+                if ticker in tickers and pd.notna(value)}
+
+    # Daily closes are a reliable fallback outside the session (including
+    # weekends and holidays); live intraday quotes supersede them when Yahoo
+    # has a newer print available.
+    closes = history["close"].dropna(how="all")
+    if not closes.empty:
+        latest_close = closes.iloc[-1]
+        fallback.update({ticker: float(latest_close[ticker]) for ticker in tickers
+                         if ticker in latest_close and pd.notna(latest_close[ticker])})
+
+    benchmark_ticker = "^GSPC"
+    benchmark_fallback = fallback.copy()
+    sp500_path = DATA_DIR / "SP500_index_close.csv"
+    if sp500_path.exists():
+        saved = _read_frame(sp500_path).iloc[:, 0].dropna()
+        if not saved.empty:
+            benchmark_fallback[benchmark_ticker] = float(saved.iloc[-1])
+    elif "benchmark" in history and not history["benchmark"].dropna().empty:
+        benchmark_fallback[benchmark_ticker] = float(history["benchmark"].dropna().iloc[-1])
+
+    fetched, _, _ = current_quotes(tickers + [benchmark_ticker], benchmark_fallback)
+    prices = {ticker: fetched[ticker] for ticker in tickers if ticker in fetched}
+    test_state.setdefault("snapshots", [])
+    test_state.setdefault("last_prices", {}).update(prices)
+    cash = float(test_state.get("cash", test_state.get("initial_capital", 0.0)))
+    equity = cash + sum(float(position["shares"]) * float(prices.get(ticker, position["entry_price"]))
+                        for ticker, position in positions.items())
+    unrealized = sum((float(prices.get(ticker, position["entry_price"])) - float(position["entry_price"]))
+                     * float(position["shares"]) for ticker, position in positions.items())
+    initial_capital = float(test_state.get("initial_capital", equity))
+    realized = float(test_state.get("realized_pnl_cumulative", 0.0))
+    stamp = now.astimezone(ZoneInfo(cfg["timezone"])).isoformat(timespec="seconds")
+    test_state["snapshots"].append({
+        "timestamp": stamp, "portfolio_value": equity,
+        "pnl": equity - initial_capital,
+        "pnl_pct": equity / initial_capital - 1 if initial_capital else 0.0,
+        "cash": cash, "unrealized_pnl": unrealized, "realized_pnl": realized,
+        "holdings": len(positions), "prices": prices,
+        "benchmark_value": fetched.get(benchmark_ticker),
+    })
+    test_state["snapshots"] = test_state["snapshots"][-20000:]
+    test_state["last_updated_at"] = stamp
+    return test_state
 
 
 def _new_test_state(test: dict) -> dict:
@@ -451,16 +505,21 @@ def main() -> None:
     for test in tests:
         is_open, message = market_state(now, test["universe"])
         print(message)
-        if not is_open:
-            continue
         universe = test["universe"]
         if universe not in histories:
             histories[universe] = load_market_history(universe)
         test_state = state["tests"].setdefault(test["id"], _new_test_state(test))
-        process_test(test, test_state, histories[universe], now)
+        if is_open:
+            process_test(test, test_state, histories[universe], now)
+        elif test_state.get("positions"):
+            mark_closed_market(test, test_state, histories[universe], now)
+        else:
+            # A new test still needs an open session to establish its first
+            # portfolio; there is nothing to mark until holdings exist.
+            continue
         updated_any = True
     if not updated_any:
-        print("No active test's market is open; state was not changed.")
+        print("No active test has holdings to refresh and no market is open; state was not changed.")
         return
     state["last_updated_at"] = now.isoformat(timespec="seconds")
     tmp = STATE_PATH.with_suffix(".tmp")
