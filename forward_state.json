@@ -773,18 +773,36 @@
             "CNC": 70.12000274658203
           },
           "benchmark_value": 7751.8798828125
+        },
+        {
+          "timestamp": "2026-10-21T12:03:49-04:00",
+          "portfolio_value": 993786.5606686779,
+          "pnl": -6213.4393313220935,
+          "pnl_pct": -0.006213439331322124,
+          "cash": 56.622558326344006,
+          "unrealized_pnl": 2594.715693298401,
+          "realized_pnl": -8766.038481620488,
+          "holdings": 5,
+          "prices": {
+            "VEEV": 320.05499267578125,
+            "MRNA": 244.89999389648438,
+            "ABBV": 283.260009765625,
+            "IT": 219.80999755859375,
+            "CNC": 70.22000122070312
+          },
+          "benchmark_value": 7752.72998046875
         }
       ],
       "last_prices": {
         "MPC": 478.30999755859375,
         "PSX": 293.010009765625,
         "VLO": 439.6499938964844,
-        "VEEV": 320.1099853515625,
+        "VEEV": 320.05499267578125,
         "APA": 50.29999923706055,
-        "MRNA": 244.68499755859375,
-        "ABBV": 283.2149963378906,
-        "IT": 221.2899932861328,
-        "CNC": 70.12000274658203
+        "MRNA": 244.89999389648438,
+        "ABBV": 283.260009765625,
+        "IT": 219.80999755859375,
+        "CNC": 70.22000122070312
       },
       "last_processed_rebalance_date": "2026-10-21",
       "started_at": "2026-10-19T14:13:08+00:00",
@@ -805,35 +823,35 @@
       ],
       "selected_at": "2026-10-21",
       "realized_pnl_cumulative": -8766.038481620488,
-      "last_updated_at": "2026-10-21T11:56:02-04:00"
+      "last_updated_at": "2026-10-21T12:03:49-04:00"
     },
-    "9f854be6b9d6": {
-      "cash": 4.277235711924732e-05,
-      "initial_capital": 1000000.0,
+    "14fc19b254e4": {
+      "cash": 5.385298322835297e-05,
+      "initial_capital": 500.0,
       "positions": {
         "MRNA": {
-          "shares": 846.409123,
-          "entry_price": 244.80734005737304,
+          "shares": 0.422858,
+          "entry_price": 245.00743700408935,
           "buy_date": "2026-10-21"
         },
         "VEEV": {
-          "shares": 635.642832,
-          "entry_price": 320.2700403442383,
+          "shares": 0.317875,
+          "entry_price": 320.2150201721191,
           "buy_date": "2026-10-21"
         },
         "ABBV": {
-          "shares": 697.276457,
-          "entry_price": 283.35660383605955,
+          "shares": 0.348582,
+          "entry_price": 283.4016397705078,
           "buy_date": "2026-10-21"
         },
         "IT": {
-          "shares": 886.49912,
-          "entry_price": 221.40063828277587,
+          "shares": 0.446233,
+          "entry_price": 219.91990255737304,
           "buy_date": "2026-10-21"
         },
         "CNC": {
-          "shares": 2784.466971,
-          "entry_price": 70.15506274795531,
+          "shares": 1.365501,
+          "entry_price": 70.25511122131347,
           "buy_date": "2026-10-21"
         }
       },
@@ -842,17 +860,17 @@
           "Date": "2026-10-21 00:00:00",
           "Action": "BUY",
           "Ticker": "MRNA",
-          "Shares": 846.409123,
-          "Price": 244.80734005737304,
-          "TradeValue": 207207.16600192388,
-          "Commission": 2.9624319305,
+          "Shares": 0.422858,
+          "Price": 245.00743700408935,
+          "TradeValue": 103.60335479667522,
+          "Commission": 0.35,
           "TransactionTaxes": 0.0,
           "ExchangeFees": 0.0,
           "RegulatoryFees": 0.0,
           "StampTaxes": 0.0,
           "VAT_GST": 0.0,
-          "OtherFees": 0.17182105196900002,
-          "TotalFees": 3.1342529824690004,
+          "OtherFees": 8.5840174e-05,
+          "TotalFees": 0.35008584017399996,
           "RealizedPnL": 0.0,
           "ReturnPct": 0.0,
           "Reason": "ENTRY",
@@ -865,17 +883,17 @@
           "Date": "2026-10-21 00:00:00",
           "Action": "BUY",
           "Ticker": "VEEV",
-          "Shares": 635.642832,
-          "Price": 320.2700403442383,
-          "TradeValue": 203577.3554491659,
-          "Commission": 2.224749912,
+          "Shares": 0.317875,
+          "Price": 320.2150201721191,
+          "TradeValue": 101.78834953721237,
+          "Commission": 0.35,
           "TransactionTaxes": 0.0,
           "ExchangeFees": 0.0,
           "RegulatoryFees": 0.0,
           "StampTaxes": 0.0,
           "VAT_GST": 0.0,
-          "OtherFees": 0.129035494896,
-          "TotalFees": 2.3537854068960002,
+          "OtherFees": 6.4528625e-05,
+          "TotalFees": 0.350064528625,
           "RealizedPnL": 0.0,
           "ReturnPct": 0.0,
           "Reason": "ENTRY",
@@ -888,17 +906,17 @@
           "Date": "2026-10-21 00:00:00",
           "Action": "BUY",
           "Ticker": "ABBV",
-          "Shares": 697.276457,
-          "Price": 283.35660383605955,
-          "TradeValue": 197577.88879036022,
-          "Commission": 2.4404675995000003,
+          "Shares": 0.348582,
+          "Price": 283.4016397705078,
+          "TradeValue": 98.78871039448316,
+          "Commission": 0.35,
           "TransactionTaxes": 0.0,
           "ExchangeFees": 0.0,
           "RegulatoryFees": 0.0,
           "StampTaxes": 0.0,
           "VAT_GST": 0.0,
-          "OtherFees": 0.141547120771,
-          "TotalFees": 2.582014720271,
+          "OtherFees": 7.076214600000001e-05,
+          "TotalFees": 0.35007076214599997,
           "RealizedPnL": 0.0,
           "ReturnPct": 0.0,
           "Reason": "ENTRY",
@@ -911,17 +929,17 @@
           "Date": "2026-10-21 00:00:00",
           "Action": "BUY",
           "Ticker": "IT",
-          "Shares": 886.49912,
-          "Price": 221.40063828277587,
-          "TradeValue": 196271.47100511912,
-          "Commission": 3.10274692,
+          "Shares": 0.446233,
+          "Price": 219.91990255737304,
+          "TradeValue": 98.13551787788424,
+          "Commission": 0.35,
           "TransactionTaxes": 0.0,
           "ExchangeFees": 0.0,
           "RegulatoryFees": 0.0,
           "StampTaxes": 0.0,
           "VAT_GST": 0.0,
-          "OtherFees": 0.17995932136,
-          "TotalFees": 3.28270624136,
+          "OtherFees": 9.058529900000001e-05,
+          "TotalFees": 0.350090585299,
           "RealizedPnL": 0.0,
           "ReturnPct": 0.0,
           "Reason": "ENTRY",
@@ -934,17 +952,17 @@
           "Date": "2026-10-21 00:00:00",
           "Action": "BUY",
           "Ticker": "CNC",
-          "Shares": 2784.466971,
-          "Price": 70.15506274795531,
-          "TradeValue": 195344.45507011405,
-          "Commission": 9.7456343985,
+          "Shares": 1.365501,
+          "Price": 70.25511122131347,
+          "TradeValue": 95.93342462781477,
+          "Commission": 0.35,
           "TransactionTaxes": 0.0,
           "ExchangeFees": 0.0,
           "RegulatoryFees": 0.0,
           "StampTaxes": 0.0,
           "VAT_GST": 0.0,
-          "OtherFees": 0.5652467951129999,
-          "TotalFees": 10.310881193613,
+          "OtherFees": 0.000277196703,
+          "TotalFees": 0.350277196703,
           "RealizedPnL": 0.0,
           "ReturnPct": 0.0,
           "Reason": "ENTRY",
@@ -956,38 +974,38 @@
       ],
       "snapshots": [
         {
-          "timestamp": "2026-10-21T11:56:02-04:00",
-          "portfolio_value": 999478.5970609465,
-          "pnl": -521.4029390534852,
-          "pnl_pct": -0.0005214029390534503,
-          "cash": 4.277235711924732e-05,
-          "unrealized_pnl": -499.7392985090345,
+          "timestamp": "2026-10-21T12:03:49-04:00",
+          "portfolio_value": 498.00041090852517,
+          "pnl": -1.9995890914748315,
+          "pnl_pct": -0.003999178182949703,
+          "cash": 5.385298322835297e-05,
+          "unrealized_pnl": -0.2490001785277518,
           "realized_pnl": 0.0,
           "holdings": 5,
           "prices": {
-            "MRNA": 244.68499755859375,
-            "VEEV": 320.1099853515625,
-            "ABBV": 283.2149963378906,
-            "IT": 221.2899932861328,
-            "CNC": 70.12000274658203
+            "MRNA": 244.88499450683594,
+            "VEEV": 320.05499267578125,
+            "ABBV": 283.260009765625,
+            "IT": 219.80999755859375,
+            "CNC": 70.22000122070312
           },
-          "benchmark_value": 7752.22998046875
+          "benchmark_value": 7752.77978515625
         }
       ],
       "last_prices": {
-        "MRNA": 244.68499755859375,
-        "VEEV": 320.1099853515625,
-        "ABBV": 283.2149963378906,
-        "IT": 221.2899932861328,
-        "CNC": 70.12000274658203
+        "MRNA": 244.88499450683594,
+        "VEEV": 320.05499267578125,
+        "ABBV": 283.260009765625,
+        "IT": 219.80999755859375,
+        "CNC": 70.22000122070312
       },
       "last_processed_rebalance_date": "2026-10-21",
-      "started_at": "2026-10-21T15:56:02+00:00",
+      "started_at": "2026-10-21T16:03:49+00:00",
       "monthly_volume": [
         {
           "year": 2026,
           "month": 10,
-          "volume": 5850.294502999999
+          "volume": 2.901049
         }
       ],
       "next_rebalance_date": "2026-10-26",
@@ -1000,8 +1018,8 @@
       ],
       "selected_at": "2026-10-21",
       "realized_pnl_cumulative": 0.0,
-      "last_updated_at": "2026-10-21T11:56:02-04:00"
+      "last_updated_at": "2026-10-21T12:03:49-04:00"
     }
   },
-  "last_updated_at": "2026-10-21T15:56:02+00:00"
+  "last_updated_at": "2026-10-21T16:03:49+00:00"
 }
