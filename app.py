@@ -343,7 +343,10 @@ with st.sidebar:
         "Rank weighted": "rank_weight",
         "Inverse volatility (60-day)": "inverse_volatility",
     }
-    allocation_label = st.selectbox("Portfolio allocation", list(allocation_labels))
+    allocation_label = st.selectbox(
+        "Portfolio allocation", list(allocation_labels),
+        index=list(allocation_labels).index("Score weighted (current default)"),
+    )
     allocation_method = allocation_labels[allocation_label]
     fractional_shares = st.toggle(
         "Allow fractional US shares", value=True, disabled=universe != "SP500",
