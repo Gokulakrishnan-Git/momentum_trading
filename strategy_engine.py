@@ -3032,7 +3032,8 @@ class Backtester:
         use_regime_filter=True,
         stop_loss_manager=None,
         backtest_start_date=None,
-        backtest_end_date=None
+        backtest_end_date=None,
+        fractional_shares=False
     ):
 
         self.strategy = strategy
@@ -3057,6 +3058,9 @@ class Backtester:
         self.allowed_regimes = set(allowed_regimes)
         self.use_regime_filter = use_regime_filter
         self.stop_loss_manager = stop_loss_manager
+        self.fractional_shares = bool(
+            fractional_shares and self.execution_engine.market == "US"
+        )
 
         self.backtest_start_date = (
             pd.Timestamp(backtest_start_date)
@@ -3180,7 +3184,8 @@ class Backtester:
                     self.execution_engine.rebalance(
                         target_weights,
                         self.open_prices,
-                        date
+                        date,
+                        fractional_shares=self.fractional_shares,
                     )
 
             # ==================================================
@@ -3463,6 +3468,7 @@ def run_strategy_backtest(
     top_n=5,
     rebalance_frequency="monthly",
     allocation_method="score_weight",
+    fractional_shares=False,
 
     # ======================================================
     # PORTFOLIO
@@ -3815,7 +3821,8 @@ def run_strategy_backtest(
         stop_loss_manager=stop_loss_manager,
 
         backtest_start_date=backtest_start_date,
-        backtest_end_date=backtest_end_date
+        backtest_end_date=backtest_end_date,
+        fractional_shares=fractional_shares,
     )
 
 

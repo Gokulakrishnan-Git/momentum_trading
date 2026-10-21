@@ -345,6 +345,11 @@ with st.sidebar:
     }
     allocation_label = st.selectbox("Portfolio allocation", list(allocation_labels))
     allocation_method = allocation_labels[allocation_label]
+    fractional_shares = st.toggle(
+        "Allow fractional US shares", value=True, disabled=universe != "SP500",
+        help="When enabled, US target allocations can be held as fractional shares. Non-US backtests use whole shares.",
+    )
+    fractional_shares = bool(fractional_shares and universe == "SP500")
     st.subheader("Risk and costs")
     use_stop = st.toggle("Use stop loss", value=False)
     stop_type = st.selectbox("Stop loss type", ["Fixed percent", "Trailing percent"], disabled=not use_stop)
@@ -376,18 +381,25 @@ with backtest_tab:
                         use_stop_loss=use_stop, stop_loss_type="fixed" if stop_type == "Fixed percent" else "trailing",
                         stop_loss_pct=stop_pct, rebalance_frequency=int(frequency) if isinstance(frequency, (int, float)) else frequency,
                         top_n=int(top_n), allocation_method=allocation_method,
+                        fractional_shares=fractional_shares,
                         use_charges=use_charges, market=cfg["market"], currency=cfg["currency"],
                         initial_capital=float(capital), show_plots=False, save_csv=True, output_dir=str(OUTPUT_DIR),
                     )
-                st.session_state.last_report = (result, cfg, universe, start, end, allocation_label)
+                st.session_state.last_report = (result, cfg, universe, start, end, allocation_label, fractional_shares)
             except Exception as exc:
                 st.exception(exc)
 
     if "last_report" in st.session_state:
-        result, cfg, report_universe, report_start, report_end, report_allocation = st.session_state.last_report
+        saved_report = st.session_state.last_report
+        if len(saved_report) == 6:
+            result, cfg, report_universe, report_start, report_end, report_allocation = saved_report
+            report_fractional_shares = False
+        else:
+            result, cfg, report_universe, report_start, report_end, report_allocation, report_fractional_shares = saved_report
         frames = output_frames(result, cfg)
         st.subheader(f"{cfg['label']} report · {report_start:%d %b %Y} – {report_end:%d %b %Y}")
-        st.caption(f"Portfolio allocation: {report_allocation}")
+        report_share_mode = "fractional shares" if report_fractional_shares else "whole shares"
+        st.caption(f"Portfolio allocation: {report_allocation} · {report_share_mode}")
         metrics = result["metrics"]
         metric_specs = [
             ("Strategy return", "total_return", "percent"), ("Benchmark return", "benchmark_total_return", "percent"),
