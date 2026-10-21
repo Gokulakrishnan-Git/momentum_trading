@@ -209,6 +209,18 @@ def publish_forward_config() -> tuple[bool, str]:
         return subprocess.run(["git", *args], cwd=ROOT, text=True,
                               capture_output=True, timeout=120)
 
+    # Streamlit Cloud does not inherit the developer's local Git identity.
+    # Give this repository a stable app author so freezing a test can commit
+    # its config without requiring a global Git setting or personal email.
+    identity = (
+        ("user.name", "Momentum Trading Streamlit App"),
+        ("user.email", "momentum-trading-streamlit@users.noreply.github.com"),
+    )
+    for key, value in identity:
+        configured = git("config", key, value)
+        if configured.returncode:
+            return False, configured.stderr.strip() or "Could not configure the Git author for this repository."
+
     added = git("add", "--", FORWARD_CONFIG_PATH.name)
     if added.returncode:
         return False, added.stderr.strip() or "Could not stage the forward-test configuration."
