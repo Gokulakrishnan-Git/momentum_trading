@@ -453,7 +453,17 @@ def render_forward_tab():
                 f_universe = st.selectbox("Market universe", list(UNIVERSES), index=1,
                                           format_func=lambda key: UNIVERSES[key]["label"])
                 f_capital = st.number_input("Starting capital", min_value=1, value=1_000_000, step=100_000)
-                f_allocation_label = st.selectbox("Portfolio allocation", list(allocation_labels), key="forward_allocation")
+                f_fractional_shares = st.toggle(
+                    "Allow fractional US shares", value=True,
+                    disabled=f_universe != "SP500", key="forward_fractional_shares",
+                    help="When enabled, dollar allocations are converted to fractional share quantities. Other markets use whole shares.",
+                )
+                f_fractional_shares = bool(f_fractional_shares and f_universe == "SP500")
+                f_allocation_label = st.selectbox(
+                    "Portfolio allocation", list(allocation_labels),
+                    index=list(allocation_labels).index("Score weighted (current default)"),
+                    key="forward_allocation",
+                )
                 f_allocation_method = allocation_labels[f_allocation_label]
             with f2:
                 f_top_n = st.number_input("Number of holdings", min_value=1, max_value=100, value=5)
@@ -490,6 +500,7 @@ def render_forward_tab():
                     "parameters": {
                         "top_n": int(f_top_n), "rebalance_frequency": frequency,
                         "allocation_method": f_allocation_method,
+                        "fractional_shares": f_fractional_shares,
                         "use_regime_filter": f_use_regime, "allowed_regimes": f_allowed or ["Bull"],
                         "use_stop_loss": f_use_stop,
                         "stop_loss_type": "fixed" if f_stop_type == "Fixed percent" else "trailing",
@@ -578,7 +589,9 @@ def render_forward_tab():
             allocation_display = next((label for label, method in allocation_labels.items()
                                        if method == params.get("allocation_method", "score_weight")),
                                       "Score weighted (current default)")
-            st.caption(f"{params.get('top_n', 5)} holdings · {allocation_display} · {params.get('rebalance_frequency', 'monthly')} rebalance · Frozen {test.get('frozen_at', 'unknown')}")
+            share_mode = ("fractional shares" if params.get("fractional_shares", False)
+                          and test.get("universe") == "SP500" else "whole shares")
+            st.caption(f"{params.get('top_n', 5)} holdings · {allocation_display} · {share_mode} · {params.get('rebalance_frequency', 'monthly')} rebalance · Frozen {test.get('frozen_at', 'unknown')}")
             if latest:
                 c1, c2, c3 = st.columns(3)
                 c1.metric("Portfolio value", f"{currency} {float(latest.get('portfolio_value', 0)):,.2f}")
@@ -631,7 +644,10 @@ def render_forward_tab():
                         "Shares held": positions.get(ticker, {}).get("shares", 0),
                         "Latest price": last_prices.get(ticker),
                     } for rank, ticker in enumerate(selected_tickers, 1)]
-                    st.dataframe(pd.DataFrame(selected_rows), use_container_width=True, hide_index=True)
+                    st.dataframe(
+                        pd.DataFrame(selected_rows), use_container_width=True, hide_index=True,
+                        column_config={"Shares held": st.column_config.NumberColumn("Shares held", format="%.6f")},
+                    )
                 st.caption(f"Last update: {test_state.get('last_updated_at', 'pending')}")
                 if test_state.get("trades"):
                     with st.expander(f"Recent simulated trades · {len(test_state['trades'])} total"):

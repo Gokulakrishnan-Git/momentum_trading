@@ -2773,7 +2773,8 @@ class ExecutionEngine:
 
     def rebalance(
         self, target_weights, prices, date, execution_prices=None,
-        buy_execution_prices=None, sell_execution_prices=None
+        buy_execution_prices=None, sell_execution_prices=None,
+        fractional_shares=False
     ):
         if len(target_weights) == 0:
             return
@@ -2800,7 +2801,8 @@ class ExecutionEngine:
                 continue
 
             target_value = portfolio_value * weight
-            shares = int(target_value // price)
+            shares = (round(target_value / price, 6) if fractional_shares
+                      else int(target_value // price))
             target_shares[stock] = shares
 
         all_stocks = (
@@ -2815,6 +2817,8 @@ class ExecutionEngine:
             current_shares = self.positions.get(stock, {}).get("shares", 0)
             desired_shares = target_shares.get(stock, 0)
             shares_to_sell = current_shares - desired_shares
+            if fractional_shares:
+                shares_to_sell = round(shares_to_sell, 6)
 
             if shares_to_sell <= 0:
                 continue
@@ -2891,6 +2895,8 @@ class ExecutionEngine:
         for stock, desired_shares in target_shares.items():
             current_shares = self.positions.get(stock, {}).get("shares", 0)
             shares_to_buy = desired_shares - current_shares
+            if fractional_shares:
+                shares_to_buy = round(shares_to_buy, 6)
 
             if shares_to_buy <= 0:
                 continue
@@ -2906,25 +2912,39 @@ class ExecutionEngine:
 
             # IBKR minimum commissions and monthly tiering make the
             # affordable share count dependent on the fee calculation.
-            while shares_to_buy > 0:
-                trade_value = shares_to_buy * price
+            if fractional_shares:
+                low, high = 0.0, shares_to_buy
+                for _ in range(48):
+                    candidate = (low + high) / 2
+                    trade_value = candidate * price
+                    charge_info = self._get_charges(
+                        trade_value, "BUY", candidate, date
+                    )
+                    if trade_value + charge_info["TotalFees"] <= self.cash:
+                        low = candidate
+                    else:
+                        high = candidate
+                shares_to_buy = int(low * 1_000_000) / 1_000_000
+            else:
+                while shares_to_buy > 0:
+                    trade_value = shares_to_buy * price
 
-                charge_info = self._get_charges(
-                    trade_value,
-                    "BUY",
-                    shares_to_buy,
-                    date
-                )
+                    charge_info = self._get_charges(
+                        trade_value,
+                        "BUY",
+                        shares_to_buy,
+                        date
+                    )
 
-                total_cost = (
-                    trade_value
-                    + charge_info["TotalFees"]
-                )
+                    total_cost = (
+                        trade_value
+                        + charge_info["TotalFees"]
+                    )
 
-                if total_cost <= self.cash:
-                    break
+                    if total_cost <= self.cash:
+                        break
 
-                shares_to_buy -= 1
+                    shares_to_buy -= 1
 
             if shares_to_buy <= 0:
                 continue

@@ -452,7 +452,9 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
                          for ticker in prices}
                 if len(buys) == len(weights):
                     engine.rebalance(weights, price_row, date,
-                                     buy_execution_prices=buys, sell_execution_prices=sells)
+                                     buy_execution_prices=buys, sell_execution_prices=sells,
+                                     fractional_shares=(universe == "SP500" and
+                                                        params.get("fractional_shares", False)))
 
     # Daily OHLC stop checks mirror the backtester, using the current session's
     # developing high/low values. The next scheduled check sells after a trigger.
