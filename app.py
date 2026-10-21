@@ -14,7 +14,7 @@ import pandas as pd
 import requests
 import streamlit as st
 import yfinance as yf
-from forward_test import STATE_PATH as FORWARD_STATE_PATH, market_state
+from forward_test import STATE_PATH as FORWARD_STATE_PATH, UNIVERSES as FORWARD_UNIVERSES, current_quotes, market_state
 
 from strategy_engine import run_strategy_backtest
 
@@ -246,6 +246,55 @@ def read_forward_state() -> dict:
     return {"tests": {}}
 
 
+def refresh_forward_display(test: dict, test_state: dict) -> tuple[dict | None, str]:
+    """Refresh the visible mark-to-market on each page render, without trading."""
+    positions = test_state.get("positions", {})
+    if not positions:
+        return None, ""
+    snapshots = test_state.get("snapshots", [])
+    persisted_latest = snapshots[-1] if snapshots else {}
+    fallback = {ticker: float(value) for ticker, value in test_state.get("last_prices", {}).items()
+                if value is not None}
+    fallback.update({ticker: float(value) for ticker, value in persisted_latest.get("prices", {}).items()
+                    if value is not None})
+    benchmark_ticker = "^GSPC"
+    if persisted_latest.get("benchmark_value") is not None:
+        fallback[benchmark_ticker] = float(persisted_latest["benchmark_value"])
+    try:
+        fetched, _, _ = current_quotes(list(positions) + [benchmark_ticker], fallback)
+    except Exception as error:
+        return persisted_latest or None, f"Live price refresh failed; showing the last saved snapshot ({error})."
+
+    prices = {ticker: float(fetched[ticker]) for ticker in positions if ticker in fetched}
+    if not prices:
+        return persisted_latest or None, "Yahoo Finance returned no newer prices; showing the last saved snapshot."
+    cash = float(test_state.get("cash", test_state.get("initial_capital", 0.0)))
+    initial = float(test_state.get("initial_capital", 0.0))
+    value = cash + sum(float(position["shares"]) * prices.get(ticker, float(position["entry_price"]))
+                       for ticker, position in positions.items())
+    unrealized = sum((prices.get(ticker, float(position["entry_price"])) - float(position["entry_price"]))
+                     * float(position["shares"]) for ticker, position in positions.items())
+    universe = test.get("universe", "SP500")
+    timezone_name = FORWARD_UNIVERSES.get(universe, {}).get("timezone", "UTC")
+    checked_at = datetime.now(timezone.utc).astimezone(ZoneInfo(timezone_name)).isoformat(timespec="seconds")
+    live_snapshot = {
+        "timestamp": checked_at,
+        "portfolio_value": value,
+        "pnl": value - initial,
+        "pnl_pct": value / initial - 1 if initial else 0.0,
+        "cash": cash,
+        "unrealized_pnl": unrealized,
+        "realized_pnl": float(test_state.get("realized_pnl_cumulative", 0.0)),
+        "holdings": len(positions),
+        "prices": prices,
+        "benchmark_value": fetched.get(benchmark_ticker),
+    }
+    # This page-load mark is display-only. The scheduled GitHub Action remains
+    # the writer of the durable portfolio state and trade history.
+    test_state["snapshots"] = [*snapshots, live_snapshot]
+    return live_snapshot, f"Latest available Yahoo Finance prices checked at {checked_at} (display refresh)."
+
+
 st.set_page_config(page_title="Momentum Strategy Backtest", page_icon="📈", layout="wide")
 st.markdown("<style>.block-container{max-width:1450px;padding-top:2rem}.hero{padding:1.5rem 1.8rem;border-radius:18px;background:linear-gradient(115deg,#10283f,#173f56);color:#f4f8fb;margin-bottom:1.2rem}.hero h1{margin:0 0 .35rem;font-size:2rem}.hero p{margin:0;color:#c6d9e4}[data-testid='stMetricValue'],[data-testid='stMetricValue'] div{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere;font-size:clamp(1.25rem,2.2vw,1.85rem)!important}</style>", unsafe_allow_html=True)
 st.markdown('<section class="hero"><h1>Momentum Strategy Backtest</h1><p>Run the notebook strategy against saved market data and export every report table.</p></section>', unsafe_allow_html=True)
@@ -381,7 +430,7 @@ with backtest_tab:
 def render_forward_tab():
         st.subheader("Forward paper tests")
         st.write("Each frozen test uses the backtest’s own momentum, MACD, RSI, eligibility, score threshold, score-weighted allocation, regime filter, stop-loss rules, and fee model. The first run after freezing starts at the next open session; it then holds until the selected rebalance schedule. Orders remain simulated.")
-        st.caption("GitHub Actions checks every five minutes. During open sessions it can rebalance; while a market is closed it refreshes portfolio value from the latest available Yahoo Finance price without trading. Fills use configurable simulated latency and slippage. This tab reloads the latest GitHub snapshot automatically every 60 seconds while open.")
+        st.caption("GitHub Actions keeps its five-minute schedule and saves paper trades. Each page load also checks Yahoo Finance and refreshes the displayed portfolio value and P&L without trading; that page-load quote is display-only until the next GitHub Action saves a snapshot.")
 
         config = read_forward_config() or {}
         frozen_tests = config.get("tests", []) if isinstance(config.get("tests"), list) else []
@@ -496,7 +545,9 @@ def render_forward_tab():
             test_id = test.get("id", "unknown")
             params = test.get("parameters", {})
             test_state = states_by_id.get(test_id, {})
-            latest = (test_state.get("snapshots") or [{}])[-1]
+            latest, price_refresh_message = refresh_forward_display(test, test_state)
+            if latest is None:
+                latest = (test_state.get("snapshots") or [{}])[-1]
             currency = UNIVERSES.get(test.get("universe"), {}).get("currency", "USD")
             status = test.get("status", "active")
             st.markdown(f"#### {test.get('name', test_id)} · {test.get('universe', '')} · {status.title()}")
@@ -509,6 +560,8 @@ def render_forward_tab():
                     st.rerun()
             open_now, market_message = market_state(datetime.now(timezone.utc), test.get("universe", "SP500"))
             (st.success if open_now else st.info)(market_message)
+            if price_refresh_message:
+                st.caption(price_refresh_message)
             st.caption(f"{params.get('top_n', 5)} holdings · {params.get('rebalance_frequency', 'monthly')} rebalance · Frozen {test.get('frozen_at', 'unknown')}")
             if latest:
                 c1, c2, c3 = st.columns(3)
