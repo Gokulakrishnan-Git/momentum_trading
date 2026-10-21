@@ -510,13 +510,17 @@ def main() -> None:
         return
     config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
     tests = [test for test in config.get("tests", []) if test.get("status", "active") == "active"]
-    if not tests:
-        print("No active forward tests.")
-        return
     state = json.loads(STATE_PATH.read_text(encoding="utf-8")) if STATE_PATH.exists() else {"schema_version": 2, "tests": {}}
     state.setdefault("tests", {})
+    configured_ids = {test.get("id") for test in config.get("tests", []) if test.get("id")}
+    removed_ids = [test_id for test_id in state["tests"] if test_id not in configured_ids]
+    for test_id in removed_ids:
+        del state["tests"][test_id]
     histories = {}
-    updated_any = False
+    updated_any = bool(removed_ids)
+    if not tests and not updated_any:
+        print("No active forward tests.")
+        return
     for test in tests:
         is_open, message = market_state(now, test["universe"])
         print(message)

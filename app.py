@@ -3,9 +3,9 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta, timezone
 from io import StringIO
 from pathlib import Path
+import base64
 import json
 import os
-import subprocess
 import time
 import uuid
 from zoneinfo import ZoneInfo
@@ -24,6 +24,9 @@ DATA_DIR = ROOT / "market_data"
 OUTPUT_DIR = ROOT / "backtest_output"
 FORWARD_CONFIG_PATH = ROOT / "forward_test.json"
 STARTUP_CHECK_PATH = ROOT / ".market_data_last_checked.json"
+GITHUB_REPOSITORY = "Gokulakrishnan-Git/momentum_trading"
+GITHUB_BRANCH = "main"
+GITHUB_WORKFLOW = "us-forward-test.yml"
 WARMUP_DAYS = 400
 UNIVERSES = {
     "NIFTY500": {"label": "NIFTY 500", "market": "INDIA", "currency": "INR", "ticker": "^CRSLDX", "benchmark": "Nifty 500"},
@@ -203,40 +206,74 @@ def write_forward_config(config: dict) -> None:
     os.replace(temporary, FORWARD_CONFIG_PATH)
 
 
-def publish_forward_config() -> tuple[bool, str]:
-    """Commit the newly frozen configuration so Actions can start the test."""
-    def git(*args: str) -> subprocess.CompletedProcess:
-        return subprocess.run(["git", *args], cwd=ROOT, text=True,
-                              capture_output=True, timeout=120)
+def _github_write_token() -> str | None:
+    """Read the write token from Streamlit secrets or a local environment variable."""
+    try:
+        token = st.secrets.get("GITHUB_TOKEN") or st.secrets.get("github", {}).get("token")
+    except Exception:
+        token = None
+    return str(token).strip() if token else os.getenv("GITHUB_TOKEN", "").strip() or None
 
-    # Streamlit Cloud does not inherit the developer's local Git identity.
-    # Give this repository a stable app author so freezing a test can commit
-    # its config without requiring a global Git setting or personal email.
-    identity = (
-        ("user.name", "Momentum Trading Streamlit App"),
-        ("user.email", "momentum-trading-streamlit@users.noreply.github.com"),
-    )
-    for key, value in identity:
-        configured = git("config", key, value)
-        if configured.returncode:
-            return False, configured.stderr.strip() or "Could not configure the Git author for this repository."
 
-    added = git("add", "--", FORWARD_CONFIG_PATH.name)
-    if added.returncode:
-        return False, added.stderr.strip() or "Could not stage the forward-test configuration."
-    committed = git("commit", "-m", "Freeze forward test", "--", FORWARD_CONFIG_PATH.name)
-    if committed.returncode:
-        return False, committed.stderr.strip() or "Could not commit the forward-test configuration."
-    fetched = git("fetch", "origin", "main")
-    if fetched.returncode:
-        return False, fetched.stderr.strip() or "Could not fetch the latest GitHub state."
-    merged = git("merge", "--no-edit", "origin/main")
-    if merged.returncode:
-        return False, merged.stderr.strip() or "Could not merge the latest GitHub state. Resolve the Git conflict and try again."
-    pushed = git("push", "origin", "main")
-    if pushed.returncode:
-        return False, pushed.stderr.strip() or "Could not push the frozen test to GitHub."
-    return True, "Frozen test pushed; GitHub Actions will start it at the next scheduled run."
+def publish_forward_config(config: dict, commit_message: str) -> tuple[bool, bool, str]:
+    """Commit config through GitHub and dispatch one immediate paper-test run."""
+    token = _github_write_token()
+    if not token:
+        return False, False, (
+            "The test was not sent to GitHub. Add a GITHUB_TOKEN secret in Streamlit Cloud "
+            "with Contents: read/write and Actions: write access, then try again."
+        )
+
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    contents_url = f"https://api.github.com/repos/{GITHUB_REPOSITORY}/contents/{FORWARD_CONFIG_PATH.name}"
+    try:
+        current = requests.get(contents_url, params={"ref": GITHUB_BRANCH}, headers=headers, timeout=20)
+        if current.status_code not in (200, 404):
+            detail = current.json().get("message", current.text[:250])
+            return False, False, f"Could not read the GitHub config ({current.status_code}): {detail}"
+
+        payload = {
+            "message": commit_message,
+            "content": base64.b64encode(json.dumps(config, indent=2).encode("utf-8")).decode("ascii"),
+            "branch": GITHUB_BRANCH,
+        }
+        if current.status_code == 200:
+            payload["sha"] = current.json()["sha"]
+        saved = requests.put(contents_url, headers=headers, json=payload, timeout=20)
+        if not saved.ok:
+            detail = saved.json().get("message", saved.text[:250])
+            return False, False, f"GitHub rejected the config update ({saved.status_code}): {detail}"
+        write_forward_config(config)
+
+        dispatch_url = (
+            f"https://api.github.com/repos/{GITHUB_REPOSITORY}/actions/workflows/"
+            f"{GITHUB_WORKFLOW}/dispatches"
+        )
+        try:
+            dispatched = requests.post(
+                dispatch_url, headers=headers, json={"ref": GITHUB_BRANCH}, timeout=20
+            )
+        except requests.RequestException as exc:
+            return True, False, (
+                "The test configuration reached GitHub, but the immediate Actions request did not "
+                f"complete: {exc}. The scheduled five-minute workflow remains enabled."
+            )
+        if dispatched.status_code != 204:
+            try:
+                detail = dispatched.json().get("message", dispatched.text[:250])
+            except ValueError:
+                detail = dispatched.text[:250]
+            return True, False, (
+                "The test configuration reached GitHub, but the immediate Actions run could not be "
+                f"started ({dispatched.status_code}): {detail}. Check that the token has Actions: write access."
+            )
+        return True, True, "Configuration published and an immediate GitHub Actions run was started."
+    except requests.RequestException as exc:
+        return False, False, f"Could not contact GitHub to publish the forward test: {exc}"
 
 
 def read_forward_state() -> dict:
@@ -466,8 +503,13 @@ with backtest_tab:
 @st.fragment(run_every="60s")
 def render_forward_tab():
         st.subheader("Forward paper tests")
-        st.write("Each frozen test uses the same momentum, MACD, RSI, eligibility, and score threshold as the backtest, plus its selected allocation method, regime filter, stop-loss rules, and fee model. The first run after freezing starts at the next open session; it then holds until the selected rebalance schedule. Orders remain simulated.")
-        st.caption("GitHub Actions keeps its five-minute schedule and saves paper trades. Each page load also checks Yahoo Finance and refreshes the displayed portfolio value and P&L without trading; that page-load quote is display-only until the next GitHub Action saves a snapshot.")
+        st.write("Each frozen test uses the same momentum, MACD, RSI, eligibility, and score threshold as the backtest, plus its selected allocation method, regime filter, stop-loss rules, and fee model. Freezing requests an immediate Actions run; if the exchange is open, that run builds the first portfolio. The test then holds until the selected rebalance schedule. Orders remain simulated.")
+        st.caption("GitHub Actions runs immediately when you freeze, pause, resume, or delete a test, and keeps its five-minute schedule for price checks. Each page load also checks Yahoo Finance and refreshes the displayed portfolio value and P&L without trading; that page-load quote is display-only until the next GitHub Action saves a snapshot.")
+        notice = st.session_state.pop("forward_action_notice", None)
+        if notice:
+            getattr(st, notice[0])(notice[1])
+        if not _github_write_token():
+            st.warning("Hosted test controls need a GITHUB_TOKEN Streamlit secret with Contents read/write and Actions write permissions.")
 
         config = read_forward_config() or {}
         frozen_tests = config.get("tests", []) if isinstance(config.get("tests"), list) else []
@@ -538,13 +580,13 @@ def render_forward_tab():
                     },
                 }
                 updated_config = {"schema_version": 2, "tests": [*frozen_tests, new_test]}
-                write_forward_config(updated_config)
-                frozen_tests.append(new_test)
-                active_count += 1
-                pushed, publish_message = publish_forward_config()
-                (st.success if pushed else st.error)(publish_message)
-                if pushed:
-                    st.info("The test is active. If its market is closed, its first portfolio will be created at the next market open.")
+                published, started, publish_message = publish_forward_config(
+                    updated_config, f"Freeze forward test: {new_test['name']}"
+                )
+                if published:
+                    frozen_tests.append(new_test)
+                    active_count += 1
+                (st.success if started else st.warning if published else st.error)(publish_message)
 
         forward_state = read_forward_state()
         states_by_id = forward_state.get("tests", {})
@@ -602,13 +644,53 @@ def render_forward_tab():
             currency = UNIVERSES.get(test.get("universe"), {}).get("currency", "USD")
             status = test.get("status", "active")
             st.markdown(f"#### {test.get('name', test_id)} · {test.get('universe', '')} · {status.title()}")
-            if st.button("Pause test" if status == "active" else "Resume test", key=f"toggle_test_{test_id}"):
-                test["status"] = "paused" if status == "active" else "active"
-                write_forward_config({"schema_version": 2, "tests": frozen_tests})
-                saved, message = publish_forward_config()
-                (st.success if saved else st.error)(message)
-                if saved:
+            pause_col, delete_col = st.columns([1, 1])
+            with pause_col:
+                if st.button("Pause test" if status == "active" else "Resume test", key=f"toggle_test_{test_id}"):
+                    updated_tests = [
+                        {**item, "status": ("paused" if status == "active" else "active")}
+                        if item.get("id") == test_id else item
+                        for item in frozen_tests
+                    ]
+                    published, started, message = publish_forward_config(
+                        {"schema_version": 2, "tests": updated_tests},
+                        f"{'Pause' if status == 'active' else 'Resume'} forward test: {test.get('name', test_id)}",
+                    )
+                    if published:
+                        st.session_state["forward_action_notice"] = (
+                            "success" if started else "warning", message
+                        )
+                        st.rerun()
+                    else:
+                        st.error(message)
+            with delete_col:
+                if st.button("Delete test", key=f"delete_test_{test_id}"):
+                    st.session_state["confirm_delete_forward_test"] = test_id
                     st.rerun()
+            if st.session_state.get("confirm_delete_forward_test") == test_id:
+                with st.container(border=True):
+                    st.warning("are you sure to delete the forward tests?")
+                    yes_col, no_col = st.columns(2)
+                    with yes_col:
+                        if st.button("Yes", key=f"confirm_delete_yes_{test_id}", type="primary"):
+                            updated_tests = [item for item in frozen_tests if item.get("id") != test_id]
+                            published, started, message = publish_forward_config(
+                                {"schema_version": 2, "tests": updated_tests},
+                                f"Delete forward test: {test.get('name', test_id)}",
+                            )
+                            if published:
+                                st.session_state.pop("confirm_delete_forward_test", None)
+                            if published:
+                                st.session_state["forward_action_notice"] = (
+                                    "success" if started else "warning", message
+                                )
+                                st.rerun()
+                            else:
+                                st.error(message)
+                    with no_col:
+                        if st.button("No", key=f"confirm_delete_no_{test_id}"):
+                            st.session_state.pop("confirm_delete_forward_test", None)
+                            st.rerun()
             open_now, market_message = market_state(datetime.now(timezone.utc), test.get("universe", "SP500"))
             (st.success if open_now else st.info)(market_message)
             if price_refresh_message:

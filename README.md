@@ -10,7 +10,7 @@ The app reads the saved files under `market_data/` and checks for incremental Ya
 
 The app can be hosted from this public GitHub repository and opened from a phone. In [Streamlit Community Cloud](https://share.streamlit.io/), sign in with GitHub, choose **Create app**, and select repository `Gokulakrishnan-Git/momentum_trading`, branch `main`, and main file `app.py`. Deploying reads the root `requirements.txt`; new commits to the selected branch are picked up by the hosted app. The Forward test tab refreshes portfolio state every 60 seconds while it is open.
 
-The hosted page can display paper-test state from GitHub Actions. Freezing, pausing, or resuming a test publishes configuration by pushing to GitHub, which requires write credentials; configure a GitHub token as a Streamlit secret before using those controls in the hosted app. Never put that token in the repository or source code.
+The hosted page can display paper-test state from GitHub Actions. Freezing, pausing, resuming, or deleting a test publishes its configuration and immediately dispatches the workflow. Configure a fine-grained GitHub token as the `GITHUB_TOKEN` Streamlit secret with **Contents: read and write** and **Actions: write** access for this repository. Never put the token in the repository or share it in chat. The five-minute schedule remains enabled for ongoing price checks.
 
 ## Backtest options and reports
 
@@ -20,7 +20,7 @@ The strategy implementation in `strategy_engine.py` is extracted from definition
 
 ## Forward paper tests
 
-The Forward test tab lets you freeze multiple independent tests using S&P 500, NIFTY 500, or TOPIX 500 data. Each test saves its own starting capital, rebalance frequency, holding count, portfolio allocation, regime filter, stop-loss settings, fee toggle, simulated latency, and slippage in `forward_test.json`. Freezing commits and pushes the configuration to GitHub; a push-triggered Actions run starts it at the next open session. Repeated tests with different parameters keep separate cash, positions, fills, portfolio value, and P&L in `forward_state.json`.
+The Forward test tab lets you freeze multiple independent tests using S&P 500, NIFTY 500, or TOPIX 500 data. Each test saves its own starting capital, rebalance frequency, holding count, portfolio allocation, regime filter, stop-loss settings, fee toggle, simulated latency, and slippage in `forward_test.json`. Freezing publishes the configuration to GitHub and dispatches an Actions run immediately; if the market is open, it establishes the portfolio on that run. Repeated tests with different parameters keep separate cash, positions, fills, portfolio value, and P&L in `forward_state.json`. Each test can be deleted after a Yes/No confirmation; the next workflow run removes its saved state.
 
 Forward signals use the same `MomentumStrategy`, selected portfolio allocator, `MarketRegime`, stop managers, and market fee profiles as the backtester. The workflow updates daily OHLC history in memory through yfinance, calculates the selected strategy at the market open, applies sells before buys, then holds until the next configured rebalance date. During open sessions, GitHub Actions checks prices and enabled stop losses every five minutes, GitHub's minimum supported schedule interval, and records portfolio performance against the S&P 500. The app charts cumulative portfolio P&L in the account currency and compares portfolio and S&P 500 returns as percentages. Simulated fills apply the frozen delay and adverse slippage; no brokerage orders are sent.
 
