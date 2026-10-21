@@ -701,6 +701,44 @@ def render_forward_tab():
             share_mode = ("fractional shares" if params.get("fractional_shares", False)
                           and test.get("universe") == "SP500" else "whole shares")
             st.caption(f"{params.get('top_n', 5)} holdings · {allocation_display} · {share_mode} · {params.get('rebalance_frequency', 'monthly')} rebalance · Frozen {test.get('frozen_at', 'unknown')}")
+            frequency = params.get("rebalance_frequency", "monthly")
+            if isinstance(frequency, int):
+                frequency_display = f"Every {frequency} trading days"
+            else:
+                frequency_display = {"monthly": "Monthly", "2weeks": "Every 2 weeks", "weekly": "Weekly"}.get(
+                    str(frequency), str(frequency)
+                )
+            allowed_regimes = ", ".join(params.get("allowed_regimes", [])) or "None selected"
+            stop_type_display = {"fixed": "Fixed percent", "trailing": "Trailing percent"}.get(
+                params.get("stop_loss_type", "fixed"), str(params.get("stop_loss_type", "fixed"))
+            )
+            stop_display = (
+                f"Enabled · {stop_type_display} · {float(params.get('stop_loss_pct', 0.08)):.0%}"
+                if params.get("use_stop_loss", False)
+                else f"Disabled · configured {stop_type_display} at {float(params.get('stop_loss_pct', 0.08)):.0%}"
+            )
+            regime_display = (
+                f"Enabled · {allowed_regimes}"
+                if params.get("use_regime_filter", False)
+                else f"Disabled · configured regimes: {allowed_regimes}"
+            )
+            with st.expander("Frozen parameters", expanded=False):
+                frozen_parameters = [
+                    ("Starting capital", f"{currency} {float(params.get('initial_capital', 0)):,.2f}"),
+                    ("Number of holdings", str(params.get("top_n", 5))),
+                    ("Portfolio allocation", allocation_display),
+                    ("Share mode", share_mode),
+                    ("Rebalance frequency", frequency_display),
+                    ("Market regime filter", regime_display),
+                    ("Stop loss", stop_display),
+                    ("Backtest fee model", "Included" if params.get("use_charges", True) else "Excluded"),
+                    ("Simulated order latency", f"{float(params.get('simulated_latency_seconds', 0)):.2f} seconds"),
+                    ("Adverse slippage", f"{float(params.get('simulated_slippage_bps', 0)):.2f} bps"),
+                ]
+                left, right = st.columns(2)
+                for index, (label, value) in enumerate(frozen_parameters):
+                    column = left if index % 2 == 0 else right
+                    column.markdown(f"**{label}:** {value}")
             if latest:
                 c1, c2, c3 = st.columns(3)
                 c1.metric("Portfolio value", f"{currency} {float(latest.get('portfolio_value', 0)):,.2f}")
