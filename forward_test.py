@@ -13,9 +13,12 @@ import yfinance as yf
 
 from strategy_engine import (
     ExecutionEngine,
+    EqualWeightAllocator,
     FixedPercentStopLoss,
+    InverseVolatilityAllocator,
     MarketRegime,
     MomentumStrategy,
+    RankWeightAllocator,
     REGIME_CONFIG,
     ScoreWeightAllocator,
     TrailingPercentStopLoss,
@@ -432,7 +435,17 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
                 engine.sell_positions(list(engine.positions), price_row, date,
                                       execution_prices=sell_prices, sell_reason="REGIME_EXIT")
             else:
-                weights = ScoreWeightAllocator().allocate(selection, open_prices, date)
+                allocator_factories = {
+                    "equal_weight": EqualWeightAllocator,
+                    "score_weight": ScoreWeightAllocator,
+                    "rank_weight": RankWeightAllocator,
+                    "inverse_volatility": InverseVolatilityAllocator,
+                }
+                allocation_method = params.get("allocation_method", "score_weight")
+                allocator_type = allocator_factories.get(allocation_method)
+                if allocator_type is None:
+                    raise ValueError(f"Unsupported portfolio allocation method: {allocation_method}")
+                weights = allocator_type().allocate(selection, open_prices, date)
                 buys = {ticker: prices[ticker] * (1 + params.get("simulated_slippage_bps", 5.0) / 10000)
                         for ticker in weights if ticker in prices}
                 sells = {ticker: prices[ticker] * (1 - params.get("simulated_slippage_bps", 5.0) / 10000)

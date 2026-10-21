@@ -337,6 +337,14 @@ with st.sidebar:
     else:
         frequency = {"Monthly": "monthly", "Every 2 weeks": "2weeks", "Weekly": "weekly"}[frequency_choice]
     top_n = st.number_input("Number of holdings", min_value=1, max_value=100, value=5)
+    allocation_labels = {
+        "Equal weight": "equal_weight",
+        "Score weighted (current default)": "score_weight",
+        "Rank weighted": "rank_weight",
+        "Inverse volatility (60-day)": "inverse_volatility",
+    }
+    allocation_label = st.selectbox("Portfolio allocation", list(allocation_labels))
+    allocation_method = allocation_labels[allocation_label]
     st.subheader("Risk and costs")
     use_stop = st.toggle("Use stop loss", value=False)
     stop_type = st.selectbox("Stop loss type", ["Fixed percent", "Trailing percent"], disabled=not use_stop)
@@ -367,17 +375,19 @@ with backtest_tab:
                         use_regime_filter=use_regime, allowed_regimes=tuple(allowed or ["Bull"]),
                         use_stop_loss=use_stop, stop_loss_type="fixed" if stop_type == "Fixed percent" else "trailing",
                         stop_loss_pct=stop_pct, rebalance_frequency=int(frequency) if isinstance(frequency, (int, float)) else frequency,
-                        top_n=int(top_n), use_charges=use_charges, market=cfg["market"], currency=cfg["currency"],
+                        top_n=int(top_n), allocation_method=allocation_method,
+                        use_charges=use_charges, market=cfg["market"], currency=cfg["currency"],
                         initial_capital=float(capital), show_plots=False, save_csv=True, output_dir=str(OUTPUT_DIR),
                     )
-                st.session_state.last_report = (result, cfg, universe, start, end)
+                st.session_state.last_report = (result, cfg, universe, start, end, allocation_label)
             except Exception as exc:
                 st.exception(exc)
 
     if "last_report" in st.session_state:
-        result, cfg, report_universe, report_start, report_end = st.session_state.last_report
+        result, cfg, report_universe, report_start, report_end, report_allocation = st.session_state.last_report
         frames = output_frames(result, cfg)
         st.subheader(f"{cfg['label']} report · {report_start:%d %b %Y} – {report_end:%d %b %Y}")
+        st.caption(f"Portfolio allocation: {report_allocation}")
         metrics = result["metrics"]
         metric_specs = [
             ("Strategy return", "total_return", "percent"), ("Benchmark return", "benchmark_total_return", "percent"),
@@ -429,7 +439,7 @@ with backtest_tab:
 @st.fragment(run_every="60s")
 def render_forward_tab():
         st.subheader("Forward paper tests")
-        st.write("Each frozen test uses the backtest’s own momentum, MACD, RSI, eligibility, score threshold, score-weighted allocation, regime filter, stop-loss rules, and fee model. The first run after freezing starts at the next open session; it then holds until the selected rebalance schedule. Orders remain simulated.")
+        st.write("Each frozen test uses the same momentum, MACD, RSI, eligibility, and score threshold as the backtest, plus its selected allocation method, regime filter, stop-loss rules, and fee model. The first run after freezing starts at the next open session; it then holds until the selected rebalance schedule. Orders remain simulated.")
         st.caption("GitHub Actions keeps its five-minute schedule and saves paper trades. Each page load also checks Yahoo Finance and refreshes the displayed portfolio value and P&L without trading; that page-load quote is display-only until the next GitHub Action saves a snapshot.")
 
         config = read_forward_config() or {}
@@ -443,6 +453,8 @@ def render_forward_tab():
                 f_universe = st.selectbox("Market universe", list(UNIVERSES), index=1,
                                           format_func=lambda key: UNIVERSES[key]["label"])
                 f_capital = st.number_input("Starting capital", min_value=1, value=1_000_000, step=100_000)
+                f_allocation_label = st.selectbox("Portfolio allocation", list(allocation_labels), key="forward_allocation")
+                f_allocation_method = allocation_labels[f_allocation_label]
             with f2:
                 f_top_n = st.number_input("Number of holdings", min_value=1, max_value=100, value=5)
                 f_frequency_label = st.selectbox("Rebalance frequency", ["Monthly", "Every 2 weeks", "Weekly", "Every N trading days"])
@@ -477,6 +489,7 @@ def render_forward_tab():
                     "status": "active", "frozen_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                     "parameters": {
                         "top_n": int(f_top_n), "rebalance_frequency": frequency,
+                        "allocation_method": f_allocation_method,
                         "use_regime_filter": f_use_regime, "allowed_regimes": f_allowed or ["Bull"],
                         "use_stop_loss": f_use_stop,
                         "stop_loss_type": "fixed" if f_stop_type == "Fixed percent" else "trailing",
@@ -562,7 +575,10 @@ def render_forward_tab():
             (st.success if open_now else st.info)(market_message)
             if price_refresh_message:
                 st.caption(price_refresh_message)
-            st.caption(f"{params.get('top_n', 5)} holdings · {params.get('rebalance_frequency', 'monthly')} rebalance · Frozen {test.get('frozen_at', 'unknown')}")
+            allocation_display = next((label for label, method in allocation_labels.items()
+                                       if method == params.get("allocation_method", "score_weight")),
+                                      "Score weighted (current default)")
+            st.caption(f"{params.get('top_n', 5)} holdings · {allocation_display} · {params.get('rebalance_frequency', 'monthly')} rebalance · Frozen {test.get('frozen_at', 'unknown')}")
             if latest:
                 c1, c2, c3 = st.columns(3)
                 c1.metric("Portfolio value", f"{currency} {float(latest.get('portfolio_value', 0)):,.2f}")

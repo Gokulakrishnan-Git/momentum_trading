@@ -3442,6 +3442,7 @@ def run_strategy_backtest(
 
     top_n=5,
     rebalance_frequency="monthly",
+    allocation_method="score_weight",
 
     # ======================================================
     # PORTFOLIO
@@ -3613,7 +3614,18 @@ def run_strategy_backtest(
     # 4. PORTFOLIO ALLOCATOR
     # ======================================================
 
-    allocator = ScoreWeightAllocator()
+    allocator_factories = {
+        "equal_weight": EqualWeightAllocator,
+        "score_weight": ScoreWeightAllocator,
+        "rank_weight": RankWeightAllocator,
+        "inverse_volatility": InverseVolatilityAllocator,
+    }
+    if allocation_method not in allocator_factories:
+        raise ValueError(
+            "allocation_method must be one of: "
+            + ", ".join(allocator_factories)
+        )
+    allocator = allocator_factories[allocation_method]()
 
 
     # ======================================================
