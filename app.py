@@ -16,7 +16,7 @@ import streamlit as st
 import yfinance as yf
 from forward_test import STATE_PATH as FORWARD_STATE_PATH, UNIVERSES as FORWARD_UNIVERSES, current_quotes, market_state
 
-from strategy_engine import MOMENTUM_STRATEGY_DEFAULTS, STRATEGY_CHOICES, run_strategy_backtest
+from strategy_engine import run_strategy_backtest
 
 
 ROOT = Path(__file__).resolve().parent
@@ -378,10 +378,6 @@ with st.sidebar:
     end = st.date_input("End date", value=yesterday, min_value=date(2016, 1, 1), max_value=yesterday)
     st.divider()
     st.subheader("Strategy")
-    strategy_variant = st.selectbox(
-        "Momentum strategy", list(STRATEGY_CHOICES),
-        format_func=lambda key: STRATEGY_CHOICES[key], key="backtest_strategy_variant",
-    )
     use_regime = st.toggle("Use regime filter", value=True)
     allowed = st.multiselect("Allowed market regimes", ["Bull", "Bear"], default=["Bull"], disabled=not use_regime)
     frequency_choice = st.selectbox("Trade frequency", ["Monthly", "Every 2 weeks", "Weekly", "Every N trading days"])
@@ -434,7 +430,6 @@ with backtest_tab:
                         benchmark_name=cfg["benchmark"], benchmark_prices=benchmark_prices,
                         regime_index_prices=benchmark_prices, backtest_start_date=start, backtest_end_date=end,
                         use_regime_filter=use_regime, allowed_regimes=tuple(allowed or ["Bull"]),
-                        strategy_variant=strategy_variant,
                         use_stop_loss=use_stop, stop_loss_type="fixed" if stop_type == "Fixed percent" else "trailing",
                         stop_loss_pct=stop_pct, rebalance_frequency=int(frequency) if isinstance(frequency, (int, float)) else frequency,
                         top_n=int(top_n), allocation_method=allocation_method,
@@ -508,7 +503,7 @@ with backtest_tab:
 @st.fragment(run_every="60s")
 def render_forward_tab():
         st.subheader("Forward paper tests")
-        st.write("Choose Strategy 1 (MACD + RSI scoring) or Strategy 2 (recent trend + acceleration) independently for each backtest or frozen forward test. Forward tests use the selected strategy with the frozen allocation, regime filter, stop-loss, and fee settings. Freezing requests an immediate Actions run; if the exchange is open, that run builds the first portfolio. Orders remain simulated.")
+        st.write("Each frozen test uses the same momentum, MACD, RSI, eligibility, and score threshold as the backtest, plus its selected allocation method, regime filter, stop-loss rules, and fee model. Freezing requests an immediate Actions run; if the exchange is open, that run builds the first portfolio. The test then holds until the selected rebalance schedule. Orders remain simulated.")
         st.caption("GitHub Actions runs immediately when you freeze, pause, resume, or delete a test, and keeps its five-minute schedule for price checks. Each page load also checks Yahoo Finance and refreshes the displayed portfolio value and P&L without trading; that page-load quote is display-only until the next GitHub Action saves a snapshot.")
         notice = st.session_state.pop("forward_action_notice", None)
         if notice:
@@ -533,10 +528,6 @@ def render_forward_tab():
                     help="When enabled, dollar allocations are converted to fractional share quantities. Other markets use whole shares.",
                 )
                 f_fractional_shares = bool(f_fractional_shares and f_universe == "SP500")
-                f_strategy_variant = st.selectbox(
-                    "Momentum strategy", list(STRATEGY_CHOICES),
-                    format_func=lambda key: STRATEGY_CHOICES[key], key="forward_strategy_variant",
-                )
                 f_allocation_label = st.selectbox(
                     "Portfolio allocation", list(allocation_labels),
                     index=list(allocation_labels).index("Score weighted (current default)"),
@@ -576,8 +567,6 @@ def render_forward_tab():
                     "id": uuid.uuid4().hex[:12], "name": f_name.strip(), "universe": f_universe,
                     "status": "active", "frozen_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                     "parameters": {
-                        "strategy_variant": f_strategy_variant,
-                        "strategy_parameters": dict(MOMENTUM_STRATEGY_DEFAULTS[f_strategy_variant]),
                         "top_n": int(f_top_n), "rebalance_frequency": frequency,
                         "allocation_method": f_allocation_method,
                         "fractional_shares": f_fractional_shares,
@@ -711,10 +700,7 @@ def render_forward_tab():
                                       "Score weighted (current default)")
             share_mode = ("fractional shares" if params.get("fractional_shares", False)
                           and test.get("universe") == "SP500" else "whole shares")
-            selected_strategy = STRATEGY_CHOICES.get(
-                params.get("strategy_variant", "strategy1"), STRATEGY_CHOICES["strategy1"]
-            )
-            st.caption(f"{selected_strategy} · {params.get('top_n', 5)} holdings · {allocation_display} · {share_mode} · {params.get('rebalance_frequency', 'monthly')} rebalance · Frozen {test.get('frozen_at', 'unknown')}")
+            st.caption(f"{params.get('top_n', 5)} holdings · {allocation_display} · {share_mode} · {params.get('rebalance_frequency', 'monthly')} rebalance · Frozen {test.get('frozen_at', 'unknown')}")
             frequency = params.get("rebalance_frequency", "monthly")
             if isinstance(frequency, int):
                 frequency_display = f"Every {frequency} trading days"
@@ -737,38 +723,7 @@ def render_forward_tab():
                 else f"Disabled · configured regimes: {allowed_regimes}"
             )
             with st.expander("Frozen parameters", expanded=False):
-                strategy_parameters = params.get(
-                    "strategy_parameters",
-                    MOMENTUM_STRATEGY_DEFAULTS.get(params.get("strategy_variant", "strategy1"),
-                                                   MOMENTUM_STRATEGY_DEFAULTS["strategy1"]),
-                )
-                if params.get("strategy_variant", "strategy1") == "strategy2":
-                    strategy_detail = (
-                        f"{strategy_parameters.get('short_period', 21)}-day / "
-                        f"{strategy_parameters.get('medium_period', 63)}-day momentum; "
-                        f"{strategy_parameters.get('recent_period', 5)}-day eligibility; "
-                        f"EMA {strategy_parameters.get('fast_ema_period', 20)}/"
-                        f"{strategy_parameters.get('slow_ema_period', 50)} trend; "
-                        f"weights {strategy_parameters.get('short_momentum_weight', 0.35):.0%}/"
-                        f"{strategy_parameters.get('medium_momentum_weight', 0.30):.0%}/"
-                        f"{strategy_parameters.get('acceleration_weight', 0.20):.0%}/"
-                        f"{strategy_parameters.get('trend_weight', 0.15):.0%}; "
-                        f"minimum score {strategy_parameters.get('minimum_portfolio_score', 0.60):.2f}"
-                    )
-                else:
-                    strategy_detail = (
-                        f"6-month momentum / MACD {strategy_parameters.get('macd_fast', 12)}/"
-                        f"{strategy_parameters.get('macd_slow', 26)}/"
-                        f"{strategy_parameters.get('macd_signal', 9)} / "
-                        f"RSI {strategy_parameters.get('rsi_period', 14)}; weights "
-                        f"{strategy_parameters.get('momentum_weight', 0.60):.0%}/"
-                        f"{strategy_parameters.get('macd_weight', 0.25):.0%}/"
-                        f"{strategy_parameters.get('rsi_weight', 0.15):.0%}; "
-                        f"minimum score {strategy_parameters.get('minimum_portfolio_score', 0.60):.2f}"
-                    )
                 frozen_parameters = [
-                    ("Momentum strategy", selected_strategy),
-                    ("Strategy rules and scoring", strategy_detail),
                     ("Starting capital", f"{currency} {float(params.get('initial_capital', 0)):,.2f}"),
                     ("Number of holdings", str(params.get("top_n", 5))),
                     ("Portfolio allocation", allocation_display),
