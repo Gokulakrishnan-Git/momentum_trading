@@ -1780,6 +1780,147 @@ class MomentumStrategy(Strategy):
 
         return positions
 
+
+class MomentumStrategy2(Strategy):
+    """Recent trend plus acceleration momentum strategy from the supplied spec."""
+
+    def __init__(self, top_n=5, rebalance_frequency="monthly", short_period=21,
+                 medium_period=63, acceleration_period=None, fast_ema_period=20,
+                 slow_ema_period=50, recent_period=5,
+                 short_momentum_weight=0.35, medium_momentum_weight=0.30,
+                 acceleration_weight=0.20, trend_weight=0.15,
+                 minimum_portfolio_score=0.60):
+        if not isinstance(top_n, int) or isinstance(top_n, bool) or top_n < 1:
+            raise ValueError("top_n must be an integer >= 1")
+        for name, value in {"short_period": short_period, "medium_period": medium_period,
+                            "fast_ema_period": fast_ema_period, "slow_ema_period": slow_ema_period,
+                            "recent_period": recent_period}.items():
+            if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+                raise ValueError(f"{name} must be an integer >= 1")
+        if medium_period <= short_period:
+            raise ValueError("medium_period must be greater than short_period")
+        if slow_ema_period <= fast_ema_period:
+            raise ValueError("slow_ema_period must be greater than fast_ema_period")
+        if acceleration_period is None:
+            acceleration_period = short_period
+        if not isinstance(acceleration_period, int) or isinstance(acceleration_period, bool) or acceleration_period < 1:
+            raise ValueError("acceleration_period must be an integer >= 1")
+
+        weights = (short_momentum_weight, medium_momentum_weight,
+                   acceleration_weight, trend_weight)
+        if any(not np.isfinite(weight) or weight < 0 for weight in weights):
+            raise ValueError("Score weights must be finite and non-negative")
+        if not np.isclose(sum(weights), 1.0):
+            raise ValueError("Score weights must sum to 1.0")
+        if not np.isfinite(minimum_portfolio_score) or not 0 <= minimum_portfolio_score <= 1:
+            raise ValueError("minimum_portfolio_score must be between 0.0 and 1.0")
+
+        self.top_n = top_n
+        self.rebalance_frequency = rebalance_frequency
+        self.short_period = short_period
+        self.medium_period = medium_period
+        self.acceleration_period = acceleration_period
+        self.fast_ema_period = fast_ema_period
+        self.slow_ema_period = slow_ema_period
+        self.recent_period = recent_period
+        self.short_momentum_weight = short_momentum_weight
+        self.medium_momentum_weight = medium_momentum_weight
+        self.acceleration_weight = acceleration_weight
+        self.trend_weight = trend_weight
+        self.minimum_portfolio_score = minimum_portfolio_score
+
+    @staticmethod
+    def _percentile_rank(series):
+        valid = series.notna()
+        result = pd.Series(np.nan, index=series.index, dtype=float)
+        if valid.any():
+            result.loc[valid] = series.loc[valid].rank(method="average", pct=True)
+        return result
+
+    def generate_positions(self, prices, rebalance_dates=None):
+        if not isinstance(prices, pd.DataFrame):
+            raise TypeError("prices must be a pandas DataFrame")
+        if prices.empty:
+            return {}
+        if not prices.index.is_monotonic_increasing or prices.index.has_duplicates:
+            raise ValueError("prices index must be sorted and contain no duplicate dates")
+
+        prices = prices.astype(float).replace([np.inf, -np.inf], np.nan).where(lambda frame: frame > 0)
+        short_ret = prices / prices.shift(self.short_period) - 1.0
+        medium_ret = prices / prices.shift(self.medium_period) - 1.0
+        recent_ret = prices / prices.shift(self.recent_period) - 1.0
+        prior_short_ret = (prices.shift(self.acceleration_period)
+                           / prices.shift(self.acceleration_period + self.short_period) - 1.0)
+        acceleration = short_ret - prior_short_ret
+        fast_ema = prices.ewm(span=self.fast_ema_period, adjust=False,
+                              min_periods=self.fast_ema_period).mean()
+        slow_ema = prices.ewm(span=self.slow_ema_period, adjust=False,
+                              min_periods=self.slow_ema_period).mean()
+        trend_separation = fast_ema / slow_ema - 1.0
+        eligible = ((recent_ret > 0) & (short_ret > 0) & (prices > fast_ema)
+                    & (fast_ema > slow_ema))
+        if rebalance_dates is None:
+            rebalance_dates = get_rebalance_dates(prices, self.rebalance_frequency)
+        else:
+            rebalance_dates = pd.DatetimeIndex(rebalance_dates)
+
+        positions = {}
+        for date in rebalance_dates:
+            if date not in prices.index:
+                continue
+            score = (
+                self.short_momentum_weight * self._percentile_rank(short_ret.loc[date])
+                + self.medium_momentum_weight * self._percentile_rank(medium_ret.loc[date])
+                + self.acceleration_weight * self._percentile_rank(acceleration.loc[date])
+                + self.trend_weight * self._percentile_rank(trend_separation.loc[date])
+            )
+            score = score.where(eligible.loc[date]).dropna().sort_values(ascending=False)
+            if len(score) < self.top_n:
+                continue
+            top_scores = score.head(self.top_n)
+            if float(top_scores.mean()) < self.minimum_portfolio_score:
+                continue
+            positions[date] = top_scores
+        return positions
+
+
+STRATEGY_CHOICES = {
+    "strategy1": "Strategy 1 · MACD + RSI scoring",
+    "strategy2": "Strategy 2 · Recent trend + acceleration",
+}
+
+MOMENTUM_STRATEGY_DEFAULTS = {
+    "strategy1": {
+        "macd_fast": 12, "macd_slow": 26, "macd_signal": 9, "rsi_period": 14,
+        "momentum_weight": 0.60, "macd_weight": 0.25, "rsi_weight": 0.15,
+        "minimum_portfolio_score": 0.60,
+    },
+    "strategy2": {
+        "short_period": 21, "medium_period": 63, "acceleration_period": 21,
+        "fast_ema_period": 20, "slow_ema_period": 50, "recent_period": 5,
+        "short_momentum_weight": 0.35, "medium_momentum_weight": 0.30,
+        "acceleration_weight": 0.20, "trend_weight": 0.15,
+        "minimum_portfolio_score": 0.60,
+    },
+}
+
+
+def create_momentum_strategy(strategy_variant="strategy1", top_n=5,
+                             rebalance_frequency="monthly", strategy_parameters=None):
+    """Create the selected strategy with shared portfolio settings."""
+    factories = {"strategy1": MomentumStrategy, "strategy2": MomentumStrategy2}
+    try:
+        strategy_class = factories[strategy_variant]
+    except KeyError as exc:
+        raise ValueError("strategy_variant must be 'strategy1' or 'strategy2'") from exc
+    strategy_kwargs = dict(MOMENTUM_STRATEGY_DEFAULTS[strategy_variant])
+    if strategy_parameters:
+        unknown = set(strategy_parameters) - set(strategy_kwargs)
+        if unknown:
+            raise ValueError(f"Unknown parameters for {strategy_variant}: {', '.join(sorted(unknown))}")
+        strategy_kwargs.update(strategy_parameters)
+    return strategy_class(top_n=top_n, rebalance_frequency=rebalance_frequency, **strategy_kwargs)
+
 # ---- Notebook definition cell 9 ----
 # ==========================================================
 # Portfolio Allocators
@@ -3488,7 +3629,8 @@ def run_strategy_backtest(
 
     show_plots=True,
     save_csv=True,
-    output_dir="backtest_output"
+    output_dir="backtest_output",
+    strategy_variant="strategy1",
 ):
 
     # ======================================================
@@ -3630,9 +3772,10 @@ def run_strategy_backtest(
     # 3. STRATEGY
     # ======================================================
 
-    strategy = MomentumStrategy(
+    strategy = create_momentum_strategy(
+        strategy_variant=strategy_variant,
         top_n=top_n,
-        rebalance_frequency=rebalance_frequency
+        rebalance_frequency=rebalance_frequency,
     )
 
 

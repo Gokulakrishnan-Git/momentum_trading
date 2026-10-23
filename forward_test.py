@@ -17,11 +17,12 @@ from strategy_engine import (
     FixedPercentStopLoss,
     InverseVolatilityAllocator,
     MarketRegime,
-    MomentumStrategy,
+    MOMENTUM_STRATEGY_DEFAULTS,
     RankWeightAllocator,
     REGIME_CONFIG,
     ScoreWeightAllocator,
     TrailingPercentStopLoss,
+    create_momentum_strategy,
     get_ibkr_fee_profile,
     get_rebalance_dates,
 )
@@ -356,8 +357,14 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
 
     # Keep the strategy in one place: this is the same indicator, eligibility,
     # ranking, portfolio score threshold, and score-weight allocator as the backtester.
-    strategy = MomentumStrategy(top_n=params["top_n"],
-                                rebalance_frequency=params["rebalance_frequency"])
+    strategy = create_momentum_strategy(
+        strategy_variant=params.get("strategy_variant", "strategy1"),
+        top_n=params["top_n"],
+        rebalance_frequency=params["rebalance_frequency"],
+        strategy_parameters=params.get("strategy_parameters") or MOMENTUM_STRATEGY_DEFAULTS.get(
+            params.get("strategy_variant", "strategy1"), MOMENTUM_STRATEGY_DEFAULTS["strategy1"]
+        ),
+    )
     normal_dates = _rebalance_dates(open_prices, params["rebalance_frequency"])
     test_state["next_rebalance_date"] = next_rebalance_date(
         open_prices.index, params["rebalance_frequency"], date, history["config"]["calendar"])
