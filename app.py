@@ -693,6 +693,16 @@ def render_forward_tab():
                             st.rerun()
             open_now, market_message = market_state(datetime.now(timezone.utc), test.get("universe", "SP500"))
             (st.success if open_now else st.info)(market_message)
+            if (test.get("universe") == "NIFTY500"
+                    and params.get("use_regime_filter", False)
+                    and params.get("allowed_regimes")
+                    and test_state.get("selected_tickers")
+                    and not test_state.get("positions")):
+                allowed_regimes = ", ".join(params["allowed_regimes"])
+                st.info(
+                    f"Waiting for {allowed_regimes} regime. This test's market-regime filter is enabled, "
+                    "so it will stay in cash until an allowed regime is detected."
+                )
             if price_refresh_message:
                 st.caption(price_refresh_message)
             allocation_display = next((label for label, method in allocation_labels.items()
