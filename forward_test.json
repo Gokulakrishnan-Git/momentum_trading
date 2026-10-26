@@ -70,6 +70,30 @@
         "simulated_latency_seconds": 1.0,
         "simulated_slippage_bps": 5.0
       }
+    },
+    {
+      "id": "7ef56d53b234",
+      "name": "Forward test 4",
+      "universe": "NIFTY500",
+      "status": "active",
+      "frozen_at": "2026-10-26T04:06:25+00:00",
+      "parameters": {
+        "top_n": 5,
+        "rebalance_frequency": 3,
+        "allocation_method": "score_weight",
+        "fractional_shares": false,
+        "use_regime_filter": true,
+        "allowed_regimes": [
+          "Bull"
+        ],
+        "use_stop_loss": false,
+        "stop_loss_type": "fixed",
+        "stop_loss_pct": 0.08,
+        "use_charges": true,
+        "initial_capital": 100000.0,
+        "simulated_latency_seconds": 1.0,
+        "simulated_slippage_bps": 5.0
+      }
     }
   ]
 }
