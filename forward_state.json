@@ -1518,6 +1518,24 @@
             "PTC": 194.6300048828125
           },
           "benchmark_value": 7722.97998046875
+        },
+        {
+          "timestamp": "2026-10-28T00:34:34-04:00",
+          "portfolio_value": 942417.7327563802,
+          "pnl": -57582.267243619775,
+          "pnl_pct": -0.05758226724361981,
+          "cash": 62.39109683432616,
+          "unrealized_pnl": -1855.5130236966138,
+          "realized_pnl": -55676.66511792306,
+          "holdings": 5,
+          "prices": {
+            "VEEV": 312.7300109863281,
+            "IT": 220.8000030517578,
+            "CRL": 359.0400085449219,
+            "ADP": 292.8800048828125,
+            "PTC": 194.6300048828125
+          },
+          "benchmark_value": 7722.97998046875
         }
       ],
       "last_prices": {
@@ -1553,7 +1571,7 @@
       ],
       "selected_at": "2026-10-26",
       "realized_pnl_cumulative": -55676.66511792306,
-      "last_updated_at": "2026-10-27T19:58:11-04:00"
+      "last_updated_at": "2026-10-28T00:34:34-04:00"
     },
     "14fc19b254e4": {
       "cash": 0.00018229826058302478,
@@ -2447,6 +2465,24 @@
             "PTC": 194.6300048828125
           },
           "benchmark_value": 7722.97998046875
+        },
+        {
+          "timestamp": "2026-10-28T00:34:34-04:00",
+          "portfolio_value": 470.2988773620575,
+          "pnl": -29.70112263794249,
+          "pnl_pct": -0.059402245275885,
+          "cash": 0.00018229826058302478,
+          "unrealized_pnl": -2.7405305421780928,
+          "realized_pnl": -24.1597866266803,
+          "holdings": 5,
+          "prices": {
+            "VEEV": 312.7300109863281,
+            "IT": 220.8000030517578,
+            "CRL": 359.0400085449219,
+            "ADP": 292.8800048828125,
+            "PTC": 194.6300048828125
+          },
+          "benchmark_value": 7722.97998046875
         }
       ],
       "last_prices": {
@@ -2478,7 +2514,7 @@
       ],
       "selected_at": "2026-10-26",
       "realized_pnl_cumulative": -24.1597866266803,
-      "last_updated_at": "2026-10-27T19:58:11-04:00"
+      "last_updated_at": "2026-10-28T00:34:34-04:00"
     },
     "142cf22662ca": {
       "cash": 100000.0,
@@ -2539,6 +2575,18 @@
           "holdings": 0,
           "prices": {},
           "benchmark_value": 7676.60986328125
+        },
+        {
+          "timestamp": "2026-10-28T10:04:34+05:30",
+          "portfolio_value": 100000.0,
+          "pnl": 0.0,
+          "pnl_pct": 0.0,
+          "cash": 100000.0,
+          "unrealized_pnl": 0.0,
+          "realized_pnl": 0.0,
+          "holdings": 0,
+          "prices": {},
+          "benchmark_value": 7722.97998046875
         }
       ],
       "last_prices": {
@@ -2561,7 +2609,7 @@
       ],
       "selected_at": "2026-10-26",
       "realized_pnl_cumulative": 0.0,
-      "last_updated_at": "2026-10-27T10:48:04+05:30"
+      "last_updated_at": "2026-10-28T10:04:34+05:30"
     },
     "7ef56d53b234": {
       "cash": 100000.0,
@@ -2622,6 +2670,18 @@
           "holdings": 0,
           "prices": {},
           "benchmark_value": 7676.60986328125
+        },
+        {
+          "timestamp": "2026-10-28T10:04:34+05:30",
+          "portfolio_value": 100000.0,
+          "pnl": 0.0,
+          "pnl_pct": 0.0,
+          "cash": 100000.0,
+          "unrealized_pnl": 0.0,
+          "realized_pnl": 0.0,
+          "holdings": 0,
+          "prices": {},
+          "benchmark_value": 7722.97998046875
         }
       ],
       "last_prices": {
@@ -2644,8 +2704,8 @@
       ],
       "selected_at": "2026-10-26",
       "realized_pnl_cumulative": 0.0,
-      "last_updated_at": "2026-10-27T10:48:04+05:30"
+      "last_updated_at": "2026-10-28T10:04:34+05:30"
     }
   },
-  "last_updated_at": "2026-10-27T23:58:11+00:00"
+  "last_updated_at": "2026-10-28T04:34:34+00:00"
 }
