@@ -14,9 +14,11 @@ import pandas as pd
 import requests
 import streamlit as st
 import yfinance as yf
+import altair as alt
 from forward_test import STATE_PATH as FORWARD_STATE_PATH, UNIVERSES as FORWARD_UNIVERSES, current_quotes, market_state
 
 from strategy_engine import run_strategy_backtest
+from sp500_history import membership_mask, prepare_sp500_history
 
 
 ROOT = Path(__file__).resolve().parent
@@ -191,6 +193,32 @@ def output_frames(result: dict, cfg: dict) -> dict[str, pd.DataFrame]:
     }
 
 
+def fixed_chart(frame: pd.DataFrame, *, kind: str = "line", height: int = 300) -> None:
+    """Render a static Vega-Lite chart without pan or zoom interactions."""
+    chart_data = frame.copy()
+    if len(chart_data) > 2500:
+        stride = (len(chart_data) + 2499) // 2500
+        chart_data = chart_data.iloc[::stride]
+        if not chart_data.index[-1] == frame.index[-1]:
+            chart_data = pd.concat([chart_data, frame.iloc[[-1]]])
+    chart_data.index.name = chart_data.index.name or "Time"
+    long_data = chart_data.reset_index().melt(
+        id_vars=[chart_data.index.name], var_name="Series", value_name="Value"
+    )
+    time_field = chart_data.index.name
+    mark = alt.Chart(long_data)
+    if kind == "area":
+        mark = mark.mark_area(opacity=0.55)
+    else:
+        mark = mark.mark_line()
+    chart = mark.encode(
+        x=alt.X(f"{time_field}:T", title=None),
+        y=alt.Y("Value:Q", title=None),
+        color=alt.Color("Series:N", title=None),
+    ).properties(height=height)
+    st.altair_chart(chart, use_container_width=True)
+
+
 def read_forward_config() -> dict | None:
     if not FORWARD_CONFIG_PATH.exists():
         return None
@@ -344,9 +372,9 @@ def refresh_forward_display(test: dict, test_state: dict) -> tuple[dict | None, 
     return live_snapshot, f"Latest available Yahoo Finance prices checked at {checked_at} (display refresh)."
 
 
-st.set_page_config(page_title="Momentum Strategy Backtest", page_icon="📈", layout="wide")
+st.set_page_config(page_title="Momentum strategy", page_icon="📈", layout="wide")
 st.markdown("<style>.block-container{max-width:1450px;padding-top:2rem}.hero{padding:1.5rem 1.8rem;border-radius:18px;background:linear-gradient(115deg,#10283f,#173f56);color:#f4f8fb;margin-bottom:1.2rem}.hero h1{margin:0 0 .35rem;font-size:2rem}.hero p{margin:0;color:#c6d9e4}[data-testid='stMetricValue'],[data-testid='stMetricValue'] div{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere;font-size:clamp(1.25rem,2.2vw,1.85rem)!important}</style>", unsafe_allow_html=True)
-st.markdown('<section class="hero"><h1>Momentum Strategy Backtest</h1><p>Run the notebook strategy against saved market data and export every report table.</p></section>', unsafe_allow_html=True)
+st.markdown('<section class="hero"><h1>Momentum strategy</h1><p>Backtest and monitor frozen forward paper tests.</p></section>', unsafe_allow_html=True)
 
 today = datetime.now(ZoneInfo("Asia/Kolkata")).date()
 yesterday = today - timedelta(days=1)
@@ -371,48 +399,51 @@ if st.session_state.get("startup_update_date") != today:
 for name, msg, okay in st.session_state.startup_update:
     (st.success if okay else st.warning)(f"{UNIVERSES[name]['label']}: {msg}")
 
-with st.sidebar:
-    st.header("Backtest inputs")
-    universe = st.selectbox("Universe", list(UNIVERSES), format_func=lambda k: UNIVERSES[k]["label"])
-    start = st.date_input("Start date", value=date(2024, 1, 1), min_value=date(2016, 1, 1), max_value=yesterday)
-    end = st.date_input("End date", value=yesterday, min_value=date(2016, 1, 1), max_value=yesterday)
-    st.divider()
-    st.subheader("Strategy")
-    use_regime = st.toggle("Use regime filter", value=True)
-    allowed = st.multiselect("Allowed market regimes", ["Bull", "Bear"], default=["Bull"], disabled=not use_regime)
-    frequency_choice = st.selectbox("Trade frequency", ["Monthly", "Every 2 weeks", "Weekly", "Every N trading days"])
-    if frequency_choice == "Every N trading days":
-        frequency = st.number_input("Trading days between rebalance", min_value=1, max_value=252, value=3)
-    else:
-        frequency = {"Monthly": "monthly", "Every 2 weeks": "2weeks", "Weekly": "weekly"}[frequency_choice]
-    top_n = st.number_input("Number of holdings", min_value=1, max_value=100, value=5)
-    allocation_labels = {
-        "Equal weight": "equal_weight",
-        "Score weighted (current default)": "score_weight",
-        "Rank weighted": "rank_weight",
-        "Inverse volatility (60-day)": "inverse_volatility",
-    }
-    allocation_label = st.selectbox(
-        "Portfolio allocation", list(allocation_labels),
-        index=list(allocation_labels).index("Score weighted (current default)"),
-    )
-    allocation_method = allocation_labels[allocation_label]
-    fractional_shares = st.toggle(
-        "Allow fractional US shares", value=True, disabled=universe != "SP500",
-        help="When enabled, US target allocations can be held as fractional shares. Non-US backtests use whole shares.",
-    )
-    fractional_shares = bool(fractional_shares and universe == "SP500")
-    st.subheader("Risk and costs")
-    use_stop = st.toggle("Use stop loss", value=False)
-    stop_type = st.selectbox("Stop loss type", ["Fixed percent", "Trailing percent"], disabled=not use_stop)
-    stop_pct = st.slider("Stop loss (%)", min_value=1, max_value=50, value=8, disabled=not use_stop) / 100
-    use_charges = st.toggle("Include notebook fee model charges", value=True)
-    capital = st.number_input("Initial capital", min_value=1, value=1_000_000, step=100_000)
-    run = st.button("Run backtest", type="primary", use_container_width=True)
-
 backtest_tab, forward_tab = st.tabs(["Backtest", "Forward test"])
 
 with backtest_tab:
+    st.subheader("Backtest inputs")
+    input_market, input_strategy, input_risk = st.columns(3)
+    with input_market:
+        universe = st.selectbox("Universe", list(UNIVERSES), format_func=lambda k: UNIVERSES[k]["label"])
+        start = st.date_input("Start date", value=date(2024, 1, 1), min_value=date(2016, 1, 1), max_value=yesterday)
+        end = st.date_input("End date", value=yesterday, min_value=date(2016, 1, 1), max_value=yesterday)
+        use_historical_sp500 = st.toggle(
+            "Use historical S&P 500 constituents", value=True, disabled=universe != "SP500",
+            help="Includes former constituents in the backtest and downloads missing adjusted OHLC into a local cache when you run it.",
+        )
+    with input_strategy:
+        use_regime = st.toggle("Use regime filter", value=True)
+        allowed = st.multiselect("Allowed market regimes", ["Bull", "Bear"], default=["Bull"], disabled=not use_regime)
+        frequency_choice = st.selectbox("Trade frequency", ["Monthly", "Every 2 weeks", "Weekly", "Every N trading days"])
+        if frequency_choice == "Every N trading days":
+            frequency = st.number_input("Trading days between rebalance", min_value=1, max_value=252, value=3)
+        else:
+            frequency = {"Monthly": "monthly", "Every 2 weeks": "2weeks", "Weekly": "weekly"}[frequency_choice]
+        top_n = st.number_input("Number of holdings", min_value=1, max_value=100, value=5)
+        allocation_labels = {
+            "Equal weight": "equal_weight",
+            "Score weighted (current default)": "score_weight",
+            "Rank weighted": "rank_weight",
+            "Inverse volatility (60-day)": "inverse_volatility",
+        }
+        allocation_label = st.selectbox(
+            "Portfolio allocation", list(allocation_labels),
+            index=list(allocation_labels).index("Score weighted (current default)"),
+        )
+        allocation_method = allocation_labels[allocation_label]
+    with input_risk:
+        fractional_shares = st.toggle(
+            "Allow fractional US shares", value=True, disabled=universe != "SP500",
+            help="When enabled, US target allocations can be held as fractional shares. Non-US backtests use whole shares.",
+        )
+        fractional_shares = bool(fractional_shares and universe == "SP500")
+        use_stop = st.toggle("Use stop loss", value=False)
+        stop_type = st.selectbox("Stop loss type", ["Fixed percent", "Trailing percent"], disabled=not use_stop)
+        stop_pct = st.slider("Stop loss (%)", min_value=1, max_value=50, value=8, disabled=not use_stop) / 100
+        use_charges = st.toggle("Include notebook fee model charges", value=True)
+        capital = st.number_input("Initial capital", min_value=1, value=1_000_000, step=100_000)
+    run = st.button("Run backtest", type="primary", use_container_width=True)
     st.caption("OHLC files are adjusted prices from Yahoo Finance. The app checks all saved universes once per day (IST) and appends any newer bars available through yesterday; reloading again that day skips the download check.")
     if run:
         if start > end:
@@ -423,6 +454,47 @@ with backtest_tab:
             cfg = UNIVERSES[universe]
             try:
                 prices, open_prices, high_prices, low_prices, close_prices, benchmark_prices = load_universe(universe, start, end)
+                historical_report = None
+                point_in_time_membership = None
+                if universe == "SP500" and use_historical_sp500:
+                    progress = st.progress(0.0, text="Preparing historical S&P 500 constituent data…")
+
+                    def update_history_progress(done, total, message):
+                        progress.progress(done / total if total else 1.0, text=message)
+
+                    cached_ohlc, historical_report = prepare_sp500_history(
+                        start, end, warmup_days=WARMUP_DAYS,
+                        progress_callback=update_history_progress,
+                        existing_tickers=open_prices.columns,
+                    )
+                    for field, cached_frame in cached_ohlc.items():
+                        if cached_frame.empty:
+                            continue
+                        if field == "open":
+                            open_prices = open_prices.combine_first(cached_frame)
+                            prices = open_prices
+                        elif field == "high":
+                            high_prices = high_prices.combine_first(cached_frame)
+                        elif field == "low":
+                            low_prices = low_prices.combine_first(cached_frame)
+                        elif field == "close":
+                            close_prices = close_prices.combine_first(cached_frame)
+                    point_in_time_membership = membership_mask(open_prices.index, open_prices.columns)
+                    progress.empty()
+                    st.session_state.historical_sp500_report = historical_report
+                    st.caption(
+                        f"Historical S&P 500 data: {historical_report['available_symbols']} of "
+                        f"{historical_report['requested_symbols']} constituents have cached OHLC; "
+                        f"{historical_report['downloaded_symbols']} downloaded for this run."
+                    )
+                    if historical_report["unavailable_symbols"] or historical_report["failed_symbols"]:
+                        missing_count = len(set(historical_report["unavailable_symbols"] + historical_report["failed_symbols"]))
+                        st.warning(
+                            f"Yahoo Finance did not provide complete OHLC for {missing_count} historical constituents. "
+                            "Those symbols are excluded when their prices are missing; the local cache will be reused on later runs."
+                        )
+                else:
+                    st.session_state.historical_sp500_report = None
                 with st.spinner("Running backtest and building reports…"):
                     result = run_strategy_backtest(
                         universe_name=universe, prices=prices, open_prices=open_prices, high_prices=high_prices,
@@ -434,6 +506,7 @@ with backtest_tab:
                         stop_loss_pct=stop_pct, rebalance_frequency=int(frequency) if isinstance(frequency, (int, float)) else frequency,
                         top_n=int(top_n), allocation_method=allocation_method,
                         fractional_shares=fractional_shares,
+                        point_in_time_membership=point_in_time_membership,
                         use_charges=use_charges, market=cfg["market"], currency=cfg["currency"],
                         initial_capital=float(capital), show_plots=False, save_csv=True, output_dir=str(OUTPUT_DIR),
                     )
@@ -452,6 +525,14 @@ with backtest_tab:
         st.subheader(f"{cfg['label']} report · {report_start:%d %b %Y} – {report_end:%d %b %Y}")
         report_share_mode = "fractional shares" if report_fractional_shares else "whole shares"
         st.caption(f"Portfolio allocation: {report_allocation} · {report_share_mode}")
+        if report_universe == "SP500":
+            historical_report = st.session_state.get("historical_sp500_report")
+            if historical_report:
+                st.caption(
+                    f"Point-in-time S&P 500 membership enabled · "
+                    f"{historical_report['available_symbols']} constituent price histories available · "
+                    f"local OHLC cache"
+                )
         metrics = result["metrics"]
         metric_specs = [
             ("Strategy return", "total_return", "percent"), ("Benchmark return", "benchmark_total_return", "percent"),
@@ -474,7 +555,7 @@ with backtest_tab:
                 col.metric(label, rendered)
         st.subheader("Equity curves")
         curve = pd.concat([frames["Strategy curve"], frames["Benchmark curve"]], axis=1).sort_index().dropna(how="all")
-        st.line_chart(curve, height=360)
+        fixed_chart(curve, height=360)
         left, right = st.columns(2)
         with left:
             st.subheader("Monthly return heatmap")
@@ -489,7 +570,7 @@ with backtest_tab:
         with right:
             st.subheader("Portfolio drawdown")
             drawdown = result["drawdown"] * 100
-            st.area_chart(drawdown.rename("Drawdown (%)"), height=240)
+            fixed_chart(drawdown.rename("Drawdown (%)").to_frame(), kind="area", height=240)
         tab_names = list(frames)
         tabs = st.tabs(tab_names)
         slug = {"Trade log": "trade_log", "Top 5 trade frequency": "top5_trade_frequency", "Strategy curve": "strategy_curve", "Benchmark curve": "benchmark_curve", "Monthly returns": "monthly_returns", "Backtest results": "backtest_results", "Regime": "regime"}
@@ -635,51 +716,35 @@ def render_forward_tab():
         if not frozen_tests:
             st.caption("No forward tests are frozen yet. Freezing a test publishes it to GitHub Actions; you can create additional tests with different parameters at any time.")
         for test in frozen_tests:
-            test_id = test.get("id", "unknown")
-            params = test.get("parameters", {})
-            test_state = states_by_id.get(test_id, {})
-            latest, price_refresh_message = refresh_forward_display(test, test_state)
-            if latest is None:
-                latest = (test_state.get("snapshots") or [{}])[-1]
-            currency = UNIVERSES.get(test.get("universe"), {}).get("currency", "USD")
-            status = test.get("status", "active")
-            st.markdown(f"#### {test.get('name', test_id)} · {test.get('universe', '')} · {status.title()}")
-            pause_col, delete_col = st.columns([1, 1])
-            with pause_col:
-                if st.button("Pause test" if status == "active" else "Resume test", key=f"toggle_test_{test_id}"):
-                    updated_tests = [
-                        {**item, "status": ("paused" if status == "active" else "active")}
-                        if item.get("id") == test_id else item
-                        for item in frozen_tests
-                    ]
-                    published, started, message = publish_forward_config(
-                        {"schema_version": 2, "tests": updated_tests},
-                        f"{'Pause' if status == 'active' else 'Resume'} forward test: {test.get('name', test_id)}",
+            with st.container(border=True):
+                test_id = test.get("id", "unknown")
+                params = test.get("parameters", {})
+                test_state = states_by_id.get(test_id, {})
+                latest, price_refresh_message = refresh_forward_display(test, test_state)
+                if latest is None:
+                    latest = (test_state.get("snapshots") or [{}])[-1]
+                currency = UNIVERSES.get(test.get("universe"), {}).get("currency", "USD")
+                status = test.get("status", "active")
+                name_col, name_action_col = st.columns([4, 1])
+                with name_col:
+                    edited_name = st.text_input(
+                        "Forward test name", value=test.get("name", test_id),
+                        key=f"edit_forward_name_{test_id}",
                     )
-                    if published:
-                        st.session_state["forward_action_notice"] = (
-                            "success" if started else "warning", message
-                        )
-                        st.rerun()
-                    else:
-                        st.error(message)
-            with delete_col:
-                if st.button("Delete test", key=f"delete_test_{test_id}"):
-                    st.session_state["confirm_delete_forward_test"] = test_id
-                    st.rerun()
-            if st.session_state.get("confirm_delete_forward_test") == test_id:
-                with st.container(border=True):
-                    st.warning("are you sure to delete the forward tests?")
-                    yes_col, no_col = st.columns(2)
-                    with yes_col:
-                        if st.button("Yes", key=f"confirm_delete_yes_{test_id}", type="primary"):
-                            updated_tests = [item for item in frozen_tests if item.get("id") != test_id]
+                with name_action_col:
+                    st.markdown(f"**{test.get('universe', '')} · {status.title()}**")
+                    if st.button("Save name", key=f"save_forward_name_{test_id}"):
+                        if not edited_name.strip():
+                            st.error("Forward test name cannot be empty.")
+                        else:
+                            renamed_tests = [
+                                {**item, "name": edited_name.strip()} if item.get("id") == test_id else item
+                                for item in frozen_tests
+                            ]
                             published, started, message = publish_forward_config(
-                                {"schema_version": 2, "tests": updated_tests},
-                                f"Delete forward test: {test.get('name', test_id)}",
+                                {"schema_version": 2, "tests": renamed_tests},
+                                f"Rename forward test: {edited_name.strip()}",
                             )
-                            if published:
-                                st.session_state.pop("confirm_delete_forward_test", None)
                             if published:
                                 st.session_state["forward_action_notice"] = (
                                     "success" if started else "warning", message
@@ -687,130 +752,166 @@ def render_forward_tab():
                                 st.rerun()
                             else:
                                 st.error(message)
-                    with no_col:
-                        if st.button("No", key=f"confirm_delete_no_{test_id}"):
-                            st.session_state.pop("confirm_delete_forward_test", None)
+                pause_col, delete_col = st.columns([1, 1])
+                with pause_col:
+                    if st.button("Pause test" if status == "active" else "Resume test", key=f"toggle_test_{test_id}"):
+                        updated_tests = [
+                            {**item, "status": ("paused" if status == "active" else "active")}
+                            if item.get("id") == test_id else item
+                            for item in frozen_tests
+                        ]
+                        published, started, message = publish_forward_config(
+                            {"schema_version": 2, "tests": updated_tests},
+                            f"{'Pause' if status == 'active' else 'Resume'} forward test: {test.get('name', test_id)}",
+                        )
+                        if published:
+                            st.session_state["forward_action_notice"] = (
+                                "success" if started else "warning", message
+                            )
                             st.rerun()
-            open_now, market_message = market_state(datetime.now(timezone.utc), test.get("universe", "SP500"))
-            (st.success if open_now else st.info)(market_message)
-            if (test.get("universe") == "NIFTY500"
-                    and params.get("use_regime_filter", False)
-                    and params.get("allowed_regimes")
-                    and test_state.get("selected_tickers")
-                    and not test_state.get("positions")):
-                allowed_regimes = ", ".join(params["allowed_regimes"])
-                st.info(
-                    f"Waiting for {allowed_regimes} regime. This test's market-regime filter is enabled, "
-                    "so it will stay in cash until an allowed regime is detected."
-                )
-            if price_refresh_message:
-                st.caption(price_refresh_message)
-            allocation_display = next((label for label, method in allocation_labels.items()
-                                       if method == params.get("allocation_method", "score_weight")),
-                                      "Score weighted (current default)")
-            share_mode = ("fractional shares" if params.get("fractional_shares", False)
-                          and test.get("universe") == "SP500" else "whole shares")
-            st.caption(f"{params.get('top_n', 5)} holdings · {allocation_display} · {share_mode} · {params.get('rebalance_frequency', 'monthly')} rebalance · Frozen {test.get('frozen_at', 'unknown')}")
-            frequency = params.get("rebalance_frequency", "monthly")
-            if isinstance(frequency, int):
-                frequency_display = f"Every {frequency} trading days"
-            else:
-                frequency_display = {"monthly": "Monthly", "2weeks": "Every 2 weeks", "weekly": "Weekly"}.get(
-                    str(frequency), str(frequency)
-                )
-            allowed_regimes = ", ".join(params.get("allowed_regimes", [])) or "None selected"
-            stop_type_display = {"fixed": "Fixed percent", "trailing": "Trailing percent"}.get(
-                params.get("stop_loss_type", "fixed"), str(params.get("stop_loss_type", "fixed"))
-            )
-            stop_display = (
-                f"Enabled · {stop_type_display} · {float(params.get('stop_loss_pct', 0.08)):.0%}"
-                if params.get("use_stop_loss", False)
-                else f"Disabled · configured {stop_type_display} at {float(params.get('stop_loss_pct', 0.08)):.0%}"
-            )
-            regime_display = (
-                f"Enabled · {allowed_regimes}"
-                if params.get("use_regime_filter", False)
-                else f"Disabled · configured regimes: {allowed_regimes}"
-            )
-            with st.expander("Frozen parameters", expanded=False):
-                frozen_parameters = [
-                    ("Starting capital", f"{currency} {float(params.get('initial_capital', 0)):,.2f}"),
-                    ("Number of holdings", str(params.get("top_n", 5))),
-                    ("Portfolio allocation", allocation_display),
-                    ("Share mode", share_mode),
-                    ("Rebalance frequency", frequency_display),
-                    ("Market regime filter", regime_display),
-                    ("Stop loss", stop_display),
-                    ("Backtest fee model", "Included" if params.get("use_charges", True) else "Excluded"),
-                    ("Simulated order latency", f"{float(params.get('simulated_latency_seconds', 0)):.2f} seconds"),
-                    ("Adverse slippage", f"{float(params.get('simulated_slippage_bps', 0)):.2f} bps"),
-                ]
-                left, right = st.columns(2)
-                for index, (label, value) in enumerate(frozen_parameters):
-                    column = left if index % 2 == 0 else right
-                    column.markdown(f"**{label}:** {value}")
-            if latest:
-                c1, c2, c3 = st.columns(3)
-                c1.metric("Portfolio value", f"{currency} {float(latest.get('portfolio_value', 0)):,.2f}")
-                c2.metric("Total P&L", f"{currency} {float(latest.get('pnl', 0)):,.2f}", f"{float(latest.get('pnl_pct', 0)):.2%}")
-                c3.metric("Unrealized P&L", f"{currency} {float(latest.get('unrealized_pnl', 0)):,.2f}")
-                c4, c5, c6 = st.columns(3)
-                c4.metric("Realized P&L", f"{currency} {float(latest.get('realized_pnl', 0)):,.2f}")
-                c5.metric("Cash", f"{currency} {float(latest.get('cash', 0)):,.2f}")
-                c6.metric("Holdings", int(latest.get("holdings", 0)))
-                snapshots = test_state.get("snapshots", [])
-                st.metric("Next rebalance date", test_state.get("next_rebalance_date") or "Pending")
-                initial_capital = float(params.get("initial_capital", 0))
-                curve_rows = [{
-                    "Time": pd.to_datetime(row["timestamp"], utc=True).tz_convert("Asia/Kolkata"),
-                    "Portfolio value": float(row["portfolio_value"]),
-                    "Portfolio P&L": float(row["portfolio_value"]) - initial_capital,
-                    "Portfolio return (%)": 100 * (float(row["portfolio_value"]) / initial_capital - 1),
-                    "Benchmark value": row.get("benchmark_value"),
-                } for row in snapshots if row.get("timestamp") and initial_capital > 0]
-                if curve_rows:
-                    curve = pd.DataFrame(curve_rows).set_index("Time")
-                    benchmark_values = pd.to_numeric(curve["Benchmark value"], errors="coerce")
-                    benchmark_values = benchmark_values.dropna()
-                    if not benchmark_values.empty and float(benchmark_values.iloc[0]) > 0:
-                        curve["S&P 500 return (%)"] = 100 * (pd.to_numeric(curve["Benchmark value"], errors="coerce") / float(benchmark_values.iloc[0]) - 1)
-                    curve = curve.drop(columns=["Benchmark value", "Portfolio value"])
-                    st.subheader("Portfolio P&L")
-                    st.caption(f"Cumulative paper P&L from the frozen starting capital, in {currency}.")
-                    st.area_chart(curve[["Portfolio P&L"]], height=220)
-                    st.subheader("Portfolio return vs S&P 500")
-                    return_series = ["Portfolio return (%)"]
-                    if "S&P 500 return (%)" in curve:
-                        return_series.append("S&P 500 return (%)")
-                    st.line_chart(curve[return_series], height=260)
-                    st.caption("Returns are percentages from the starting capital / first S&P 500 reading. The Total P&L metric above shows both the currency amount and percentage.")
-                    if "S&P 500 return (%)" in curve:
-                        benchmark_returns = curve[["S&P 500 return (%)"]].dropna()
-                        if len(benchmark_returns) > 1:
-                            benchmark_change = float(benchmark_returns.iloc[-1, 0] - benchmark_returns.iloc[0, 0])
-                            st.subheader("S&P 500 intraday movement · zoomed")
-                            st.caption(f"S&P 500 changed {benchmark_change:+.4f}% across the recorded checks. This chart uses its own vertical scale to make small moves visible; compare with the shared-scale chart above for relative performance.")
-                            st.line_chart(benchmark_returns, height=220)
-                selected_tickers = test_state.get("selected_tickers") or list(test_state.get("positions", {}))
-                if selected_tickers:
-                    st.markdown(f"**Top {len(selected_tickers)} selected** · {test_state.get('selected_at', 'selection date pending')}")
-                    positions = test_state.get("positions", {})
-                    last_prices = latest.get("prices", {})
-                    selected_rows = [{
-                        "Rank": rank, "Ticker": ticker,
-                        "Shares held": positions.get(ticker, {}).get("shares", 0),
-                        "Latest price": last_prices.get(ticker),
-                    } for rank, ticker in enumerate(selected_tickers, 1)]
-                    st.dataframe(
-                        pd.DataFrame(selected_rows), use_container_width=True, hide_index=True,
-                        column_config={"Shares held": st.column_config.NumberColumn("Shares held", format="%.6f")},
+                        else:
+                            st.error(message)
+                with delete_col:
+                    if st.button("Delete test", key=f"delete_test_{test_id}"):
+                        st.session_state["confirm_delete_forward_test"] = test_id
+                        st.rerun()
+                if st.session_state.get("confirm_delete_forward_test") == test_id:
+                    with st.container(border=True):
+                        st.warning("are you sure to delete the forward tests?")
+                        yes_col, no_col = st.columns(2)
+                        with yes_col:
+                            if st.button("Yes", key=f"confirm_delete_yes_{test_id}", type="primary"):
+                                updated_tests = [item for item in frozen_tests if item.get("id") != test_id]
+                                published, started, message = publish_forward_config(
+                                    {"schema_version": 2, "tests": updated_tests},
+                                    f"Delete forward test: {test.get('name', test_id)}",
+                                )
+                                if published:
+                                    st.session_state.pop("confirm_delete_forward_test", None)
+                                if published:
+                                    st.session_state["forward_action_notice"] = (
+                                        "success" if started else "warning", message
+                                    )
+                                    st.rerun()
+                                else:
+                                    st.error(message)
+                        with no_col:
+                            if st.button("No", key=f"confirm_delete_no_{test_id}"):
+                                st.session_state.pop("confirm_delete_forward_test", None)
+                                st.rerun()
+                open_now, market_message = market_state(datetime.now(timezone.utc), test.get("universe", "SP500"))
+                (st.success if open_now else st.info)(market_message)
+                if (test.get("universe") == "NIFTY500"
+                        and params.get("use_regime_filter", False)
+                        and params.get("allowed_regimes")
+                        and test_state.get("selected_tickers")
+                        and not test_state.get("positions")):
+                    allowed_regimes = ", ".join(params["allowed_regimes"])
+                    st.info(
+                        f"Waiting for {allowed_regimes} regime. This test's market-regime filter is enabled, "
+                        "so it will stay in cash until an allowed regime is detected."
                     )
-                st.caption(f"Last update: {test_state.get('last_updated_at', 'pending')}")
-                if test_state.get("trades"):
-                    with st.expander(f"Recent simulated trades · {len(test_state['trades'])} total"):
-                        st.dataframe(pd.DataFrame(test_state["trades"][-20:]), use_container_width=True, hide_index=True)
-            else:
-                st.info("Waiting for the next market-open Actions run to build the first portfolio.")
+                if price_refresh_message:
+                    st.caption(price_refresh_message)
+                allocation_display = next((label for label, method in allocation_labels.items()
+                                           if method == params.get("allocation_method", "score_weight")),
+                                          "Score weighted (current default)")
+                share_mode = ("fractional shares" if params.get("fractional_shares", False)
+                              and test.get("universe") == "SP500" else "whole shares")
+                st.caption(f"{params.get('top_n', 5)} holdings · {allocation_display} · {share_mode} · {params.get('rebalance_frequency', 'monthly')} rebalance · Frozen {test.get('frozen_at', 'unknown')}")
+                frequency = params.get("rebalance_frequency", "monthly")
+                if isinstance(frequency, int):
+                    frequency_display = f"Every {frequency} trading days"
+                else:
+                    frequency_display = {"monthly": "Monthly", "2weeks": "Every 2 weeks", "weekly": "Weekly"}.get(
+                        str(frequency), str(frequency)
+                    )
+                allowed_regimes = ", ".join(params.get("allowed_regimes", [])) or "None selected"
+                stop_type_display = {"fixed": "Fixed percent", "trailing": "Trailing percent"}.get(
+                    params.get("stop_loss_type", "fixed"), str(params.get("stop_loss_type", "fixed"))
+                )
+                stop_display = (
+                    f"Enabled · {stop_type_display} · {float(params.get('stop_loss_pct', 0.08)):.0%}"
+                    if params.get("use_stop_loss", False)
+                    else f"Disabled · configured {stop_type_display} at {float(params.get('stop_loss_pct', 0.08)):.0%}"
+                )
+                regime_display = (
+                    f"Enabled · {allowed_regimes}"
+                    if params.get("use_regime_filter", False)
+                    else f"Disabled · configured regimes: {allowed_regimes}"
+                )
+                with st.expander("Frozen parameters", expanded=False):
+                    frozen_parameters = [
+                        ("Starting capital", f"{currency} {float(params.get('initial_capital', 0)):,.2f}"),
+                        ("Number of holdings", str(params.get("top_n", 5))),
+                        ("Portfolio allocation", allocation_display),
+                        ("Share mode", share_mode),
+                        ("Rebalance frequency", frequency_display),
+                        ("Market regime filter", regime_display),
+                        ("Stop loss", stop_display),
+                        ("Backtest fee model", "Included" if params.get("use_charges", True) else "Excluded"),
+                        ("Simulated order latency", f"{float(params.get('simulated_latency_seconds', 0)):.2f} seconds"),
+                        ("Adverse slippage", f"{float(params.get('simulated_slippage_bps', 0)):.2f} bps"),
+                    ]
+                    left, right = st.columns(2)
+                    for index, (label, value) in enumerate(frozen_parameters):
+                        column = left if index % 2 == 0 else right
+                        column.markdown(f"**{label}:** {value}")
+                if latest:
+                    c1, c2, c3 = st.columns(3)
+                    c1.metric("Portfolio value", f"{currency} {float(latest.get('portfolio_value', 0)):,.2f}")
+                    c2.metric("Total P&L", f"{currency} {float(latest.get('pnl', 0)):,.2f}", f"{float(latest.get('pnl_pct', 0)):.2%}")
+                    c3.metric("Unrealized P&L", f"{currency} {float(latest.get('unrealized_pnl', 0)):,.2f}")
+                    c4, c5, c6 = st.columns(3)
+                    c4.metric("Realized P&L", f"{currency} {float(latest.get('realized_pnl', 0)):,.2f}")
+                    c5.metric("Cash", f"{currency} {float(latest.get('cash', 0)):,.2f}")
+                    c6.metric("Holdings", int(latest.get("holdings", 0)))
+                    snapshots = test_state.get("snapshots", [])
+                    st.metric("Next rebalance date", test_state.get("next_rebalance_date") or "Pending")
+                    initial_capital = float(params.get("initial_capital", 0))
+                    curve_rows = [{
+                        "Time": pd.to_datetime(row["timestamp"], utc=True).tz_convert("Asia/Kolkata"),
+                        "Portfolio value": float(row["portfolio_value"]),
+                        "Portfolio P&L": float(row["portfolio_value"]) - initial_capital,
+                        "Portfolio return (%)": 100 * (float(row["portfolio_value"]) / initial_capital - 1),
+                        "Benchmark value": row.get("benchmark_value"),
+                    } for row in snapshots if row.get("timestamp") and initial_capital > 0]
+                    if curve_rows:
+                        curve = pd.DataFrame(curve_rows).set_index("Time")
+                        benchmark_values = pd.to_numeric(curve["Benchmark value"], errors="coerce")
+                        benchmark_values = benchmark_values.dropna()
+                        if not benchmark_values.empty and float(benchmark_values.iloc[0]) > 0:
+                            curve["S&P 500 return (%)"] = 100 * (pd.to_numeric(curve["Benchmark value"], errors="coerce") / float(benchmark_values.iloc[0]) - 1)
+                        curve = curve.drop(columns=["Benchmark value", "Portfolio value"])
+                        st.subheader("Portfolio P&L")
+                        st.caption(f"Cumulative paper P&L from the frozen starting capital, in {currency}.")
+                        fixed_chart(curve[["Portfolio P&L"]], kind="area", height=220)
+                        st.subheader("Portfolio return vs S&P 500")
+                        return_series = ["Portfolio return (%)"]
+                        if "S&P 500 return (%)" in curve:
+                            return_series.append("S&P 500 return (%)")
+                        fixed_chart(curve[return_series], height=260)
+                        st.caption("Returns are percentages from the starting capital / first S&P 500 reading. The Total P&L metric above shows both the currency amount and percentage.")
+                    selected_tickers = test_state.get("selected_tickers") or list(test_state.get("positions", {}))
+                    if selected_tickers:
+                        st.markdown(f"**Top {len(selected_tickers)} selected** · {test_state.get('selected_at', 'selection date pending')}")
+                        positions = test_state.get("positions", {})
+                        last_prices = latest.get("prices", {})
+                        selected_rows = [{
+                            "Rank": rank, "Ticker": ticker,
+                            "Shares held": positions.get(ticker, {}).get("shares", 0),
+                            "Latest price": last_prices.get(ticker),
+                        } for rank, ticker in enumerate(selected_tickers, 1)]
+                        st.dataframe(
+                            pd.DataFrame(selected_rows), use_container_width=True, hide_index=True,
+                            column_config={"Shares held": st.column_config.NumberColumn("Shares held", format="%.6f")},
+                        )
+                    st.caption(f"Last update: {test_state.get('last_updated_at', 'pending')}")
+                    if test_state.get("trades"):
+                        with st.expander(f"Recent simulated trades · {len(test_state['trades'])} total"):
+                            st.dataframe(pd.DataFrame(test_state["trades"][-20:]), use_container_width=True, hide_index=True)
+                else:
+                    st.info("Waiting for the next market-open Actions run to build the first portfolio.")
 
 
 with forward_tab:

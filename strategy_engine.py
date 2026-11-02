@@ -1092,7 +1092,8 @@ class Strategy(ABC):
     def generate_positions(
         self,
         prices,
-        rebalance_dates=None
+        rebalance_dates=None,
+        membership=None,
     ):
         pass
 
@@ -1507,7 +1508,8 @@ class MomentumStrategy(Strategy):
     def generate_positions(
         self,
         prices,
-        rebalance_dates=None
+        rebalance_dates=None,
+        membership=None,
     ):
 
         # ==================================================
@@ -1589,6 +1591,13 @@ class MomentumStrategy(Strategy):
             (rsi > 50)
         )
 
+        if membership is not None:
+            membership = membership.reindex(
+                index=prices.index,
+                columns=prices.columns,
+                fill_value=False,
+            ).fillna(False).astype(bool)
+
 
         # ==================================================
         # POSITIONS
@@ -1626,6 +1635,16 @@ class MomentumStrategy(Strategy):
             eligible_today = (
                 eligible.loc[date]
             )
+
+            membership_today = None
+            if membership is not None:
+                membership_today = membership.loc[date]
+                # Point-in-time constituents must be the cross-sectional
+                # universe before percentile ranks are calculated.
+                momentum_today = momentum_today.where(membership_today)
+                macd_today = macd_today.where(membership_today)
+                rsi_today = rsi_today.where(membership_today)
+                eligible_today = eligible_today & membership_today
 
 
             # ==================================================
@@ -3033,7 +3052,8 @@ class Backtester:
         stop_loss_manager=None,
         backtest_start_date=None,
         backtest_end_date=None,
-        fractional_shares=False
+        fractional_shares=False,
+        point_in_time_membership=None,
     ):
 
         self.strategy = strategy
@@ -3061,6 +3081,7 @@ class Backtester:
         self.fractional_shares = bool(
             fractional_shares and self.execution_engine.market == "US"
         )
+        self.point_in_time_membership = point_in_time_membership
 
         self.backtest_start_date = (
             pd.Timestamp(backtest_start_date)
@@ -3104,7 +3125,8 @@ class Backtester:
         # Generate signals on the FULL loaded history so that
         # moving averages / momentum have their required warm-up.
         selections = self.strategy.generate_positions(
-            self.open_prices
+            self.open_prices,
+            membership=self.point_in_time_membership,
         )
 
         # ==================================================
@@ -3488,7 +3510,8 @@ def run_strategy_backtest(
 
     show_plots=True,
     save_csv=True,
-    output_dir="backtest_output"
+    output_dir="backtest_output",
+    point_in_time_membership=None
 ):
 
     # ======================================================
@@ -3557,6 +3580,13 @@ def run_strategy_backtest(
     high_prices = high_prices.loc[common_index, common_columns]
     low_prices = low_prices.loc[common_index, common_columns]
     close_prices = close_prices.loc[common_index, common_columns]
+
+    if point_in_time_membership is not None:
+        point_in_time_membership = point_in_time_membership.reindex(
+            index=common_index,
+            columns=common_columns,
+            fill_value=False,
+        ).fillna(False).astype(bool)
 
     # ======================================================
     # 2A. VALIDATE BACKTEST DATE RANGE
@@ -3823,6 +3853,7 @@ def run_strategy_backtest(
         backtest_start_date=backtest_start_date,
         backtest_end_date=backtest_end_date,
         fractional_shares=fractional_shares,
+        point_in_time_membership=point_in_time_membership,
     )
 
 

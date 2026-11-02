@@ -1,10 +1,12 @@
-# Momentum Strategy Backtest
+# Momentum strategy
 
 ## Start the app
 
 Double-click **Trading App.bat**. On first launch, it creates a local `.venv`, installs the packages in `requirements.txt`, and opens the app in your browser. Later launches reuse that environment and start the app directly. The old **Start Backtest App.bat** filename remains as a compatibility launcher.
 
 The app reads the saved files under `market_data/` and checks for incremental Yahoo Finance updates through yesterday once per day (IST) for NIFTY 500, S&P 500, and TOPIX 500. Reloads during the same day skip this check. It only requests the tickers already present in each universe's saved close-price file, and merges new adjusted OHLC bars and benchmark closes into the existing CSVs. Internet access is needed for initial package installation and data updates.
+
+For S&P 500 backtests, **Use historical S&P 500 constituents** is enabled by default. It uses the point-in-time membership intervals in `market_data/SP500_historical_membership.csv`, downloads missing adjusted OHLC for constituents that overlap the selected backtest period, and applies membership at each rebalance before cross-sectional ranking. Downloaded symbol histories and coverage metadata are cached in the ignored `.sp500_historical_cache/` directory and reused by later backtests. This cache is local to the machine running the app; Streamlit Community Cloud may discard it when its instance is restarted, so hosted runs can download the histories again. Historical membership data is sourced from [fja05680/sp500](https://github.com/fja05680/sp500) and is distributed under the included `SP500_DATA_LICENSE.txt`.
 
 ## Deploy to Streamlit Community Cloud
 
@@ -14,13 +16,13 @@ The hosted page can display paper-test state from GitHub Actions. Freezing, paus
 
 ## Backtest options and reports
 
-Choose a universe, date range, regime filter, allowed regimes, rebalance frequency, holding count, portfolio allocation, stop-loss settings, fee toggle, and starting capital. Allocation options are equal weight, score weighted (the existing default), rank weighted, and 60-day inverse volatility. The end date defaults to yesterday. The report shows strategy metrics and equity curves, and provides CSV downloads for trade log, top five trade frequency, strategy curve, benchmark curve, monthly returns, backtest results, and regime.
+Backtest inputs are shown inside the Backtest tab. Choose a universe, date range, regime filter, allowed regimes, rebalance frequency, holding count, portfolio allocation, stop-loss settings, fee toggle, and starting capital. Allocation options are equal weight, score weighted (the existing default), rank weighted, and 60-day inverse volatility. Charts are static to prevent accidental pan and zoom. The end date defaults to yesterday. The report shows strategy metrics and equity curves, and provides CSV downloads for trade log, top five trade frequency, strategy curve, benchmark curve, monthly returns, backtest results, and regime.
 
 The strategy implementation in `strategy_engine.py` is extracted from definition cells in `momentum_updated_regime_exact_tested_updated.ipynb`; notebook download and execution cells are excluded. Existing `backtest_output/` files are retained, and new runs save the notebook's CSV reports there.
 
 ## Forward paper tests
 
-The Forward test tab lets you freeze multiple independent tests using S&P 500, NIFTY 500, or TOPIX 500 data. Each test saves its own starting capital, rebalance frequency, holding count, portfolio allocation, regime filter, stop-loss settings, fee toggle, simulated latency, and slippage in `forward_test.json`. Freezing publishes the configuration to GitHub and dispatches an Actions run immediately; if the market is open, it establishes the portfolio on that run. Repeated tests with different parameters keep separate cash, positions, fills, portfolio value, and P&L in `forward_state.json`. Each test can be deleted after a Yes/No confirmation; the next workflow run removes its saved state.
+The Forward test tab lets you freeze multiple independent tests using S&P 500, NIFTY 500, or TOPIX 500 data. Tests appear in separate cards, and their names can be edited after creation. Each test saves its own starting capital, rebalance frequency, holding count, portfolio allocation, regime filter, stop-loss settings, fee toggle, simulated latency, and slippage in `forward_test.json`. Freezing publishes the configuration to GitHub and dispatches an Actions run immediately; if the market is open, it establishes the portfolio on that run. Repeated tests with different parameters keep separate cash, positions, fills, portfolio value, and P&L in `forward_state.json`. Each test can be deleted after a Yes/No confirmation; the next workflow run removes its saved state.
 
 Forward signals use the same `MomentumStrategy`, selected portfolio allocator, `MarketRegime`, stop managers, and market fee profiles as the backtester. The workflow updates daily OHLC history in memory through yfinance, calculates the selected strategy at the market open, applies sells before buys, then holds until the next configured rebalance date. During open sessions, GitHub Actions checks prices and enabled stop losses every five minutes, GitHub's minimum supported schedule interval, and records portfolio performance against the S&P 500. The app charts cumulative portfolio P&L in the account currency and compares portfolio and S&P 500 returns as percentages. Simulated fills apply the frozen delay and adverse slippage; no brokerage orders are sent.
 

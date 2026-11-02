@@ -6,3 +6,4 @@ requests
 yfinance
 pandas_market_calendars
 streamlit>=1.37,<2
+altair>=5,<6
