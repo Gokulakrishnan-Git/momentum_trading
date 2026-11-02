@@ -1939,6 +1939,24 @@
             "WST": 412.125
           },
           "benchmark_value": 7580.9501953125
+        },
+        {
+          "timestamp": "2026-11-01T23:47:48-05:00",
+          "portfolio_value": 925567.9797609589,
+          "pnl": -74432.02023904107,
+          "pnl_pct": -0.07443202023904105,
+          "cash": 266.2012575409899,
+          "unrealized_pnl": -9619.607755859295,
+          "realized_pnl": -64750.13310518174,
+          "holdings": 5,
+          "prices": {
+            "CRL": 359.7200012207031,
+            "PTC": 195.50999450683594,
+            "RVTY": 156.91000366210938,
+            "EL": 109.38999938964844,
+            "WST": 412.125
+          },
+          "benchmark_value": 7580.9501953125
         }
       ],
       "last_prices": {
@@ -1977,7 +1995,7 @@
       ],
       "selected_at": "2026-10-29",
       "realized_pnl_cumulative": -64750.13310518174,
-      "last_updated_at": "2026-10-30T18:34:54-04:00"
+      "last_updated_at": "2026-11-01T23:47:48-05:00"
     },
     "14fc19b254e4": {
       "cash": 0.00012379075774049397,
@@ -3292,6 +3310,24 @@
             "WST": 412.125
           },
           "benchmark_value": 7580.9501953125
+        },
+        {
+          "timestamp": "2026-11-01T23:47:48-05:00",
+          "portfolio_value": 459.85368197770845,
+          "pnl": -40.14631802229155,
+          "pnl_pct": -0.08029263604458314,
+          "cash": 0.00012379075774049397,
+          "unrealized_pnl": -4.905069658069847,
+          "realized_pnl": -31.367840442049335,
+          "holdings": 5,
+          "prices": {
+            "CRL": 359.7200012207031,
+            "PTC": 195.50999450683594,
+            "RVTY": 156.91000366210938,
+            "EL": 109.38999938964844,
+            "WST": 412.125
+          },
+          "benchmark_value": 7580.9501953125
         }
       ],
       "last_prices": {
@@ -3326,7 +3362,7 @@
       ],
       "selected_at": "2026-10-29",
       "realized_pnl_cumulative": -31.367840442049335,
-      "last_updated_at": "2026-10-30T18:34:54-04:00"
+      "last_updated_at": "2026-11-01T23:47:48-05:00"
     },
     "142cf22662ca": {
       "cash": 100000.0,
@@ -3423,29 +3459,51 @@
           "holdings": 0,
           "prices": {},
           "benchmark_value": 7721.02001953125
+        },
+        {
+          "timestamp": "2026-11-02T10:17:48+05:30",
+          "portfolio_value": 100000.0,
+          "pnl": 0.0,
+          "pnl_pct": 0.0,
+          "cash": 100000.0,
+          "unrealized_pnl": 0.0,
+          "realized_pnl": 0.0,
+          "holdings": 0,
+          "prices": {
+            "LAURUSLABS.NS": 2372.5,
+            "ATHERENERG.NS": 1770.800048828125,
+            "ACUTAAS.NS": 3977.300048828125,
+            "COFORGE.NS": 2106.5,
+            "PVRINOX.NS": 1507.699951171875
+          },
+          "benchmark_value": 7580.9501953125
         }
       ],
       "last_prices": {
-        "PVRINOX.NS": 1412.9000244140625,
+        "PVRINOX.NS": 1507.699951171875,
         "CYIENT.NS": 1230.0999755859375,
         "HEXT.NS": 578.4500122070312,
         "CHENNPETRO.NS": 1504.5,
-        "FSL.NS": 292.54998779296875
+        "FSL.NS": 292.54998779296875,
+        "LAURUSLABS.NS": 2372.5,
+        "ATHERENERG.NS": 1770.800048828125,
+        "ACUTAAS.NS": 3977.300048828125,
+        "COFORGE.NS": 2106.5
       },
-      "last_processed_rebalance_date": "2026-10-26",
+      "last_processed_rebalance_date": "2026-11-02",
       "started_at": "2026-10-26T04:06:59+00:00",
       "monthly_volume": [],
-      "next_rebalance_date": "2026-11-02",
+      "next_rebalance_date": "2026-11-09",
       "selected_tickers": [
-        "PVRINOX.NS",
-        "CYIENT.NS",
-        "HEXT.NS",
-        "CHENNPETRO.NS",
-        "FSL.NS"
+        "LAURUSLABS.NS",
+        "ATHERENERG.NS",
+        "ACUTAAS.NS",
+        "COFORGE.NS",
+        "PVRINOX.NS"
       ],
-      "selected_at": "2026-10-26",
+      "selected_at": "2026-11-02",
       "realized_pnl_cumulative": 0.0,
-      "last_updated_at": "2026-10-30T10:19:24+05:30"
+      "last_updated_at": "2026-11-02T10:17:48+05:30"
     },
     "7ef56d53b234": {
       "cash": 100000.0,
@@ -3548,6 +3606,18 @@
           "holdings": 0,
           "prices": {},
           "benchmark_value": 7721.02001953125
+        },
+        {
+          "timestamp": "2026-11-02T10:17:48+05:30",
+          "portfolio_value": 100000.0,
+          "pnl": 0.0,
+          "pnl_pct": 0.0,
+          "cash": 100000.0,
+          "unrealized_pnl": 0.0,
+          "realized_pnl": 0.0,
+          "holdings": 0,
+          "prices": {},
+          "benchmark_value": 7580.9501953125
         }
       ],
       "last_prices": {
@@ -3574,8 +3644,8 @@
       ],
       "selected_at": "2026-10-29",
       "realized_pnl_cumulative": 0.0,
-      "last_updated_at": "2026-10-30T10:19:24+05:30"
+      "last_updated_at": "2026-11-02T10:17:48+05:30"
     }
   },
-  "last_updated_at": "2026-10-30T22:34:54+00:00"
+  "last_updated_at": "2026-11-02T04:47:48+00:00"
 }
