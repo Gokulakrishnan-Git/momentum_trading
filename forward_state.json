@@ -2450,6 +2450,24 @@
             "SWK": 114.80999755859375
           },
           "benchmark_value": 7374.85009765625
+        },
+        {
+          "timestamp": "2026-11-09T00:06:39-05:00",
+          "portfolio_value": 916371.8105289366,
+          "pnl": -83628.18947106344,
+          "pnl_pct": -0.08362818947106343,
+          "cash": 92.67783850693377,
+          "unrealized_pnl": -5305.475826347283,
+          "realized_pnl": -78249.84738971599,
+          "holdings": 5,
+          "prices": {
+            "PTC": 195.0,
+            "RVTY": 155.1199951171875,
+            "ALLE": 185.44000244140625,
+            "LLY": 1354.0,
+            "SWK": 114.80999755859375
+          },
+          "benchmark_value": 7374.85009765625
         }
       ],
       "last_prices": {
@@ -2496,7 +2514,7 @@
       ],
       "selected_at": "2026-11-03",
       "realized_pnl_cumulative": -78249.84738971599,
-      "last_updated_at": "2026-11-06T18:57:39-05:00"
+      "last_updated_at": "2026-11-09T00:06:39-05:00"
     },
     "14fc19b254e4": {
       "cash": 0.00010057981370437119,
@@ -4339,6 +4357,25 @@
             "SWK": 114.80999755859375
           },
           "benchmark_value": 7374.85009765625
+        },
+        {
+          "timestamp": "2026-11-09T00:06:39-05:00",
+          "portfolio_value": 452.8056571594646,
+          "pnl": -47.1943428405354,
+          "pnl_pct": -0.09438868568107084,
+          "cash": 0.00010057981370437119,
+          "unrealized_pnl": -2.9641980571475077,
+          "realized_pnl": -39.30645360110555,
+          "holdings": 6,
+          "prices": {
+            "CRL": 337.239990234375,
+            "PTC": 195.0,
+            "RVTY": 155.1199951171875,
+            "ALLE": 185.44000244140625,
+            "LLY": 1354.0,
+            "SWK": 114.80999755859375
+          },
+          "benchmark_value": 7374.85009765625
         }
       ],
       "last_prices": {
@@ -4381,7 +4418,7 @@
       ],
       "selected_at": "2026-11-03",
       "realized_pnl_cumulative": -39.30645360110555,
-      "last_updated_at": "2026-11-06T18:57:39-05:00"
+      "last_updated_at": "2026-11-09T00:06:39-05:00"
     },
     "142cf22662ca": {
       "cash": 100000.0,
@@ -4544,33 +4581,54 @@
           "holdings": 0,
           "prices": {},
           "benchmark_value": 7356.72998046875
+        },
+        {
+          "timestamp": "2026-11-09T10:36:39+05:30",
+          "portfolio_value": 100000.0,
+          "pnl": 0.0,
+          "pnl_pct": 0.0,
+          "cash": 100000.0,
+          "unrealized_pnl": 0.0,
+          "realized_pnl": 0.0,
+          "holdings": 0,
+          "prices": {
+            "ATHERENERG.NS": 1854.199951171875,
+            "DIVISLAB.NS": 11727.5,
+            "PVRINOX.NS": 1619.0999755859375,
+            "SHYAMMETL.NS": 1322.300048828125,
+            "WELSPUNLIV.NS": 251.38999938964844
+          },
+          "benchmark_value": 7374.85009765625
         }
       ],
       "last_prices": {
-        "PVRINOX.NS": 1507.699951171875,
+        "PVRINOX.NS": 1619.0999755859375,
         "CYIENT.NS": 1230.0999755859375,
         "HEXT.NS": 578.4500122070312,
         "CHENNPETRO.NS": 1504.5,
         "FSL.NS": 292.54998779296875,
         "LAURUSLABS.NS": 2372.5,
-        "ATHERENERG.NS": 1770.800048828125,
+        "ATHERENERG.NS": 1854.199951171875,
         "ACUTAAS.NS": 3977.300048828125,
-        "COFORGE.NS": 2106.5
+        "COFORGE.NS": 2106.5,
+        "DIVISLAB.NS": 11727.5,
+        "SHYAMMETL.NS": 1322.300048828125,
+        "WELSPUNLIV.NS": 251.38999938964844
       },
-      "last_processed_rebalance_date": "2026-11-02",
+      "last_processed_rebalance_date": "2026-11-09",
       "started_at": "2026-10-26T04:06:59+00:00",
       "monthly_volume": [],
-      "next_rebalance_date": "2026-11-09",
+      "next_rebalance_date": "2026-11-17",
       "selected_tickers": [
-        "LAURUSLABS.NS",
         "ATHERENERG.NS",
-        "ACUTAAS.NS",
-        "COFORGE.NS",
-        "PVRINOX.NS"
+        "DIVISLAB.NS",
+        "PVRINOX.NS",
+        "SHYAMMETL.NS",
+        "WELSPUNLIV.NS"
       ],
-      "selected_at": "2026-11-02",
+      "selected_at": "2026-11-09",
       "realized_pnl_cumulative": 0.0,
-      "last_updated_at": "2026-11-06T11:05:24+05:30"
+      "last_updated_at": "2026-11-09T10:36:39+05:30"
     },
     "7ef56d53b234": {
       "cash": 100000.0,
@@ -4745,6 +4803,18 @@
             "SONACOMS.NS": 890.8499755859375
           },
           "benchmark_value": 7356.72998046875
+        },
+        {
+          "timestamp": "2026-11-09T10:36:39+05:30",
+          "portfolio_value": 100000.0,
+          "pnl": 0.0,
+          "pnl_pct": 0.0,
+          "cash": 100000.0,
+          "unrealized_pnl": 0.0,
+          "realized_pnl": 0.0,
+          "holdings": 0,
+          "prices": {},
+          "benchmark_value": 7374.85009765625
         }
       ],
       "last_prices": {
@@ -4774,8 +4844,8 @@
       ],
       "selected_at": "2026-11-06",
       "realized_pnl_cumulative": 0.0,
-      "last_updated_at": "2026-11-06T11:05:24+05:30"
+      "last_updated_at": "2026-11-09T10:36:39+05:30"
     }
   },
-  "last_updated_at": "2026-11-06T23:57:39+00:00"
+  "last_updated_at": "2026-11-09T05:06:39+00:00"
 }
