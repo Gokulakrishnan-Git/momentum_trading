@@ -2841,6 +2841,24 @@
             "CAH": 277.3900146484375
           },
           "benchmark_value": 7617.83984375
+        },
+        {
+          "timestamp": "2026-11-12T01:13:12-05:00",
+          "portfolio_value": 935648.9556471006,
+          "pnl": -64351.04435289942,
+          "pnl_pct": -0.0643510443528994,
+          "cash": 156.01102124611498,
+          "unrealized_pnl": 19249.660389556942,
+          "realized_pnl": -83515.58526045624,
+          "holdings": 5,
+          "prices": {
+            "SWK": 115.58999633789062,
+            "MTD": 1749.27001953125,
+            "MRNA": 248.8000030517578,
+            "BBY": 105.16000366210938,
+            "CAH": 277.3900146484375
+          },
+          "benchmark_value": 7617.83984375
         }
       ],
       "last_prices": {
@@ -2890,7 +2908,7 @@
       ],
       "selected_at": "2026-11-11",
       "realized_pnl_cumulative": -83515.58526045624,
-      "last_updated_at": "2026-11-11T17:16:12-05:00"
+      "last_updated_at": "2026-11-12T01:13:12-05:00"
     },
     "14fc19b254e4": {
       "cash": 3.973117429723061e-06,
@@ -5134,6 +5152,25 @@
             "CAH": 277.3900146484375
           },
           "benchmark_value": 7617.83984375
+        },
+        {
+          "timestamp": "2026-11-12T01:13:12-05:00",
+          "portfolio_value": 459.7682269185672,
+          "pnl": -40.23177308143278,
+          "pnl_pct": -0.08046354616286555,
+          "cash": 3.973117429723061e-06,
+          "unrealized_pnl": 9.489174987328935,
+          "realized_pnl": -43.396927245944326,
+          "holdings": 6,
+          "prices": {
+            "CRL": 342.6300048828125,
+            "SWK": 115.58999633789062,
+            "MTD": 1749.27001953125,
+            "MRNA": 248.8000030517578,
+            "BBY": 105.16000366210938,
+            "CAH": 277.3900146484375
+          },
+          "benchmark_value": 7617.83984375
         }
       ],
       "last_prices": {
@@ -5179,7 +5216,7 @@
       ],
       "selected_at": "2026-11-11",
       "realized_pnl_cumulative": -43.396927245944326,
-      "last_updated_at": "2026-11-11T17:16:12-05:00"
+      "last_updated_at": "2026-11-12T01:13:12-05:00"
     },
     "142cf22662ca": {
       "cash": 100000.0,
@@ -5372,6 +5409,18 @@
           "holdings": 0,
           "prices": {},
           "benchmark_value": 7522.27001953125
+        },
+        {
+          "timestamp": "2026-11-12T11:43:12+05:30",
+          "portfolio_value": 100000.0,
+          "pnl": 0.0,
+          "pnl_pct": 0.0,
+          "cash": 100000.0,
+          "unrealized_pnl": 0.0,
+          "realized_pnl": 0.0,
+          "holdings": 0,
+          "prices": {},
+          "benchmark_value": 7617.83984375
         }
       ],
       "last_prices": {
@@ -5401,7 +5450,7 @@
       ],
       "selected_at": "2026-11-09",
       "realized_pnl_cumulative": 0.0,
-      "last_updated_at": "2026-11-11T13:18:02+05:30"
+      "last_updated_at": "2026-11-12T11:43:12+05:30"
     },
     "7ef56d53b234": {
       "cash": 100000.0,
@@ -5600,37 +5649,57 @@
           "holdings": 0,
           "prices": {},
           "benchmark_value": 7522.27001953125
+        },
+        {
+          "timestamp": "2026-11-12T11:43:12+05:30",
+          "portfolio_value": 100000.0,
+          "pnl": 0.0,
+          "pnl_pct": 0.0,
+          "cash": 100000.0,
+          "unrealized_pnl": 0.0,
+          "realized_pnl": 0.0,
+          "holdings": 0,
+          "prices": {
+            "ATHERENERG.NS": 1897.9000244140625,
+            "SAILIFE.NS": 1894.0,
+            "LAURUSLABS.NS": 2408.0,
+            "DIVISLAB.NS": 11337.0,
+            "PVRINOX.NS": 1598.0
+          },
+          "benchmark_value": 7617.83984375
         }
       ],
       "last_prices": {
-        "PVRINOX.NS": 1563.5999755859375,
+        "PVRINOX.NS": 1598.0,
         "CYIENT.NS": 1230.0999755859375,
         "HEXT.NS": 578.4500122070312,
         "CHENNPETRO.NS": 1504.699951171875,
         "FSL.NS": 292.54998779296875,
-        "LAURUSLABS.NS": 2324.5,
-        "ATHERENERG.NS": 1763.5999755859375,
+        "LAURUSLABS.NS": 2408.0,
+        "ATHERENERG.NS": 1897.9000244140625,
         "COFORGE.NS": 2058.800048828125,
         "ACUTAAS.NS": 3976.0,
         "CUPID.NS": 341.5,
         "WELSPUNLIV.NS": 244.5500030517578,
-        "SONACOMS.NS": 890.8499755859375
+        "SONACOMS.NS": 890.8499755859375,
+        "SAILIFE.NS": 1894.0,
+        "DIVISLAB.NS": 11337.0
       },
-      "last_processed_rebalance_date": "2026-11-06",
+      "last_processed_rebalance_date": "2026-11-12",
       "started_at": "2026-10-26T04:06:59+00:00",
       "monthly_volume": [],
-      "next_rebalance_date": "2026-11-12",
+      "next_rebalance_date": "2026-11-17",
       "selected_tickers": [
         "ATHERENERG.NS",
+        "SAILIFE.NS",
         "LAURUSLABS.NS",
-        "PVRINOX.NS",
-        "WELSPUNLIV.NS",
-        "SONACOMS.NS"
+        "DIVISLAB.NS",
+        "PVRINOX.NS"
       ],
-      "selected_at": "2026-11-06",
+      "selected_at": "2026-11-12",
       "realized_pnl_cumulative": 0.0,
-      "last_updated_at": "2026-11-11T13:18:02+05:30"
+      "last_updated_at": "2026-11-12T11:43:12+05:30"
     }
   },
-  "last_updated_at": "2026-11-11T22:16:12+00:00"
+  "last_updated_at": "2026-11-12T06:13:12+00:00"
 }
