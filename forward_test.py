@@ -358,6 +358,9 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
     regime_metrics = None
     if params.get("use_regime_filter", False):
         benchmark = history.get("benchmark", pd.Series(dtype=float)).dropna()
+        # Match the backtest's open-time regime: only completed prior sessions
+        # may inform today's classification, never today's changing close.
+        benchmark = benchmark.loc[benchmark.index < date]
         regime_metrics = {
             "enabled": True,
             "current_regime": None,
@@ -390,14 +393,24 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
     test_state["next_rebalance_date"] = next_rebalance_date(
         open_prices.index, params["rebalance_frequency"], date, history["config"]["calendar"])
     first_run = test_state.get("started_at") is None
-    scheduled = first_run or (date in normal_dates and
-                              test_state.get("last_processed_rebalance_date") != date.date().isoformat())
+    regular_rebalance = (date in normal_dates and
+                         test_state.get("last_processed_rebalance_date") != date.date().isoformat())
+    waiting_for_allowed_regime = (
+        params.get("use_regime_filter", False)
+        and not test_state.get("positions")
+        and live_regime in params.get("allowed_regimes", [])
+    )
+    # A flat test that was held in cash by its regime filter enters as soon as
+    # an allowed regime is confirmed, at the next available session open.
+    scheduled = first_run or regular_rebalance or waiting_for_allowed_regime
     selection = None
     if scheduled:
         selection = strategy.generate_positions(open_prices, rebalance_dates=[date]).get(date)
 
     holdings = list(test_state.get("positions", {}))
-    quote_tickers = holdings + (list(selection.index.astype(str)) if selection is not None else [])
+    selected_watchlist = (list(selection.index.astype(str)) if selection is not None
+                          else list(test_state.get("selected_tickers", [])))
+    quote_tickers = list(dict.fromkeys(holdings + selected_watchlist))
     fallback_prices = {ticker: float(value) for ticker, value in test_state.get("last_prices", {}).items()
                        if ticker in quote_tickers and pd.notna(value)}
     fallback_prices.update({ticker: float(open_prices.loc[date, ticker])

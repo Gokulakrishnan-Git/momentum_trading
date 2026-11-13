@@ -3704,25 +3704,7 @@ def run_strategy_backtest(
         # Create MarketRegime
         # --------------------------------------------------
 
-        base_regime_detector = MarketRegime(
-    macd_fast=12,
-    macd_slow=26,
-    macd_signal=9,
-
-    macd_smoothing=10,
-
-    bull_macd_threshold=0.0010,
-    bear_macd_threshold=-0.0005,
-
-    rsi_period=14,
-    rsi_smoothing=3,
-
-    bull_rsi_threshold=51,
-    bear_rsi_threshold=49,
-
-    bull_confirmation_days=2,
-    bear_confirmation_days=2
-)
+        base_regime_detector = MarketRegime(**REGIME_CONFIG)
 
 
         # --------------------------------------------------
@@ -3757,13 +3739,11 @@ def run_strategy_backtest(
                 prices
             ):
 
-                # IMPORTANT:
-                # Use the exact tested MarketRegime API.
-                # The regime is calculated only from the bound
-                # saved benchmark index.
-                return self.detector.detect(
-                    self.index_prices
-                )
+                # A session's open-time decision can only use the prior
+                # completed benchmark close. Shift every indicator and the
+                # confirmed regime together to avoid same-day lookahead.
+                detected = self.detector.detect(self.index_prices)
+                return detected.shift(1)
 
 
         regime_detector = BoundMarketRegime(

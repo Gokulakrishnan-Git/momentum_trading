@@ -326,8 +326,8 @@ def read_forward_state() -> dict:
 def refresh_forward_display(test: dict, test_state: dict) -> tuple[dict | None, str]:
     """Refresh the visible mark-to-market on each page render, without trading."""
     positions = test_state.get("positions", {})
-    if not positions:
-        return None, ""
+    selected_tickers = test_state.get("selected_tickers", [])
+    tracked_tickers = list(dict.fromkeys(list(positions) + list(selected_tickers)))
     snapshots = test_state.get("snapshots", [])
     persisted_latest = snapshots[-1] if snapshots else {}
     fallback = {ticker: float(value) for ticker, value in test_state.get("last_prices", {}).items()
@@ -337,12 +337,14 @@ def refresh_forward_display(test: dict, test_state: dict) -> tuple[dict | None, 
     benchmark_ticker = "^GSPC"
     if persisted_latest.get("benchmark_value") is not None:
         fallback[benchmark_ticker] = float(persisted_latest["benchmark_value"])
+    if not tracked_tickers:
+        return persisted_latest or None, ""
     try:
-        fetched, _, _ = current_quotes(list(positions) + [benchmark_ticker], fallback)
+        fetched, _, _ = current_quotes(tracked_tickers + [benchmark_ticker], fallback)
     except Exception as error:
         return persisted_latest or None, f"Live price refresh failed; showing the last saved snapshot ({error})."
 
-    prices = {ticker: float(fetched[ticker]) for ticker in positions if ticker in fetched}
+    prices = {ticker: float(fetched[ticker]) for ticker in tracked_tickers if ticker in fetched}
     if not prices:
         return persisted_latest or None, "Yahoo Finance returned no newer prices; showing the last saved snapshot."
     cash = float(test_state.get("cash", test_state.get("initial_capital", 0.0)))
@@ -830,11 +832,17 @@ def render_forward_tab():
                     allowed_regimes = params.get("allowed_regimes", [])
                     current_regime = regime_metrics.get("current_regime")
                     if (allowed_regimes and test_state.get("selected_tickers")
-                            and not test_state.get("positions") and current_regime not in allowed_regimes):
-                        st.info(
-                            f"Waiting for an allowed regime ({', '.join(allowed_regimes)}). "
-                            f"Current benchmark regime: {current_regime or 'not confirmed yet'}; the test stays in cash."
-                        )
+                            and not test_state.get("positions")):
+                        if current_regime in allowed_regimes:
+                            st.info(
+                                f"{current_regime} regime confirmed. This flat test will enter at the next eligible "
+                                "forward-test run using that session's opening prices."
+                            )
+                        else:
+                            st.info(
+                                f"Waiting for an allowed regime ({', '.join(allowed_regimes)}). "
+                                f"Current benchmark regime: {current_regime or 'not confirmed yet'}; the test stays in cash."
+                            )
                 if price_refresh_message:
                     st.caption(price_refresh_message)
                 allocation_display = next((label for label, method in allocation_labels.items()
