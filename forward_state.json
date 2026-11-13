@@ -2949,6 +2949,25 @@
             "CAH": 278.20001220703125
           },
           "benchmark_value": 7591.85986328125
+        },
+        {
+          "timestamp": "2026-11-13T03:03:22-05:00",
+          "portfolio_value": 913906.5423170225,
+          "pnl": -86093.45768297755,
+          "pnl_pct": -0.08609345768297749,
+          "cash": 156.01102124611498,
+          "unrealized_pnl": -2492.752940521183,
+          "realized_pnl": -83515.58526045624,
+          "holdings": 5,
+          "prices": {
+            "SWK": 113.05000305175781,
+            "MTD": 1731.72998046875,
+            "MRNA": 231.3800048828125,
+            "BBY": 103.41000366210938,
+            "CAH": 278.20001220703125
+          },
+          "benchmark_ticker": "^GSPC",
+          "benchmark_value": 7591.85986328125
         }
       ],
       "last_prices": {
@@ -2998,7 +3017,7 @@
       ],
       "selected_at": "2026-11-11",
       "realized_pnl_cumulative": -83515.58526045624,
-      "last_updated_at": "2026-11-13T00:30:48-05:00"
+      "last_updated_at": "2026-11-13T03:03:22-05:00"
     },
     "14fc19b254e4": {
       "cash": 3.973117429723061e-06,
@@ -5356,6 +5375,26 @@
             "CAH": 278.20001220703125
           },
           "benchmark_value": 7591.85986328125
+        },
+        {
+          "timestamp": "2026-11-13T03:03:22-05:00",
+          "portfolio_value": 448.99227805023537,
+          "pnl": -51.00772194976463,
+          "pnl_pct": -0.10201544389952921,
+          "cash": 3.973117429723061e-06,
+          "unrealized_pnl": -1.2867738810029774,
+          "realized_pnl": -43.396927245944326,
+          "holdings": 6,
+          "prices": {
+            "CRL": 340.8299865722656,
+            "SWK": 113.05000305175781,
+            "MTD": 1731.72998046875,
+            "MRNA": 231.3800048828125,
+            "BBY": 103.41000366210938,
+            "CAH": 278.20001220703125
+          },
+          "benchmark_ticker": "^GSPC",
+          "benchmark_value": 7591.85986328125
         }
       ],
       "last_prices": {
@@ -5401,7 +5440,7 @@
       ],
       "selected_at": "2026-11-11",
       "realized_pnl_cumulative": -43.396927245944326,
-      "last_updated_at": "2026-11-13T00:30:48-05:00"
+      "last_updated_at": "2026-11-13T03:03:22-05:00"
     },
     "142cf22662ca": {
       "cash": 100000.0,
@@ -5636,21 +5675,40 @@
             "WELSPUNLIV.NS": 249.30999755859375
           },
           "benchmark_value": 7591.85986328125
+        },
+        {
+          "timestamp": "2026-11-13T13:33:22+05:30",
+          "portfolio_value": 100000.0,
+          "pnl": 0.0,
+          "pnl_pct": 0.0,
+          "cash": 100000.0,
+          "unrealized_pnl": 0.0,
+          "realized_pnl": 0.0,
+          "holdings": 0,
+          "prices": {
+            "ATHERENERG.NS": 1924.300048828125,
+            "DIVISLAB.NS": 11390.0,
+            "PVRINOX.NS": 1625.9000244140625,
+            "SHYAMMETL.NS": 1321.0,
+            "WELSPUNLIV.NS": 249.83999633789062
+          },
+          "benchmark_ticker": "^CRSLDX",
+          "benchmark_value": 23718.849609375
         }
       ],
       "last_prices": {
-        "PVRINOX.NS": 1655.5999755859375,
+        "PVRINOX.NS": 1625.9000244140625,
         "CYIENT.NS": 1230.0999755859375,
         "HEXT.NS": 578.4500122070312,
         "CHENNPETRO.NS": 1504.5,
         "FSL.NS": 292.54998779296875,
         "LAURUSLABS.NS": 2372.5,
-        "ATHERENERG.NS": 1945.699951171875,
+        "ATHERENERG.NS": 1924.300048828125,
         "ACUTAAS.NS": 3977.300048828125,
         "COFORGE.NS": 2106.5,
-        "DIVISLAB.NS": 11511.0,
-        "SHYAMMETL.NS": 1303.4000244140625,
-        "WELSPUNLIV.NS": 249.30999755859375
+        "DIVISLAB.NS": 11390.0,
+        "SHYAMMETL.NS": 1321.0,
+        "WELSPUNLIV.NS": 249.83999633789062
       },
       "last_processed_rebalance_date": "2026-11-09",
       "started_at": "2026-10-26T04:06:59+00:00",
@@ -5665,14 +5723,34 @@
       ],
       "selected_at": "2026-11-09",
       "realized_pnl_cumulative": 0.0,
-      "last_updated_at": "2026-11-13T11:00:48+05:30",
+      "last_updated_at": "2026-11-13T13:33:22+05:30",
       "regime_metrics": {
         "enabled": true,
         "current_regime": "Bear",
         "smoothed_normalized_macd": 0.003359076007048688,
         "smoothed_rsi": 72.22696323935551,
         "data_date": "2026-11-12",
-        "updated_at": "2026-11-13T05:30:48+00:00"
+        "recent_sessions": [
+          {
+            "date": "2026-11-11",
+            "smoothed_normalized_macd": 0.000710154636647741,
+            "smoothed_rsi": 70.50790149416346,
+            "macd_meets_bull": false,
+            "rsi_meets_bull": true,
+            "bull_signal": false,
+            "confirmed_regime": "Bear"
+          },
+          {
+            "date": "2026-11-12",
+            "smoothed_normalized_macd": 0.003359076007048688,
+            "smoothed_rsi": 72.22696323935551,
+            "macd_meets_bull": true,
+            "rsi_meets_bull": true,
+            "bull_signal": true,
+            "confirmed_regime": "Bear"
+          }
+        ],
+        "updated_at": "2026-11-13T08:03:22+00:00"
       }
     },
     "7ef56d53b234": {
@@ -5920,23 +5998,42 @@
             "PVRINOX.NS": 1655.5999755859375
           },
           "benchmark_value": 7591.85986328125
+        },
+        {
+          "timestamp": "2026-11-13T13:33:22+05:30",
+          "portfolio_value": 100000.0,
+          "pnl": 0.0,
+          "pnl_pct": 0.0,
+          "cash": 100000.0,
+          "unrealized_pnl": 0.0,
+          "realized_pnl": 0.0,
+          "holdings": 0,
+          "prices": {
+            "ATHERENERG.NS": 1924.300048828125,
+            "SAILIFE.NS": 1921.300048828125,
+            "LAURUSLABS.NS": 2418.39990234375,
+            "DIVISLAB.NS": 11390.0,
+            "PVRINOX.NS": 1625.9000244140625
+          },
+          "benchmark_ticker": "^CRSLDX",
+          "benchmark_value": 23718.849609375
         }
       ],
       "last_prices": {
-        "PVRINOX.NS": 1655.5999755859375,
+        "PVRINOX.NS": 1625.9000244140625,
         "CYIENT.NS": 1230.0999755859375,
         "HEXT.NS": 578.4500122070312,
         "CHENNPETRO.NS": 1504.699951171875,
         "FSL.NS": 292.54998779296875,
-        "LAURUSLABS.NS": 2429.39990234375,
-        "ATHERENERG.NS": 1945.699951171875,
+        "LAURUSLABS.NS": 2418.39990234375,
+        "ATHERENERG.NS": 1924.300048828125,
         "COFORGE.NS": 2058.800048828125,
         "ACUTAAS.NS": 3976.0,
         "CUPID.NS": 341.5,
         "WELSPUNLIV.NS": 244.5500030517578,
         "SONACOMS.NS": 890.8499755859375,
-        "SAILIFE.NS": 1929.5999755859375,
-        "DIVISLAB.NS": 11511.0
+        "SAILIFE.NS": 1921.300048828125,
+        "DIVISLAB.NS": 11390.0
       },
       "last_processed_rebalance_date": "2026-11-12",
       "started_at": "2026-10-26T04:06:59+00:00",
@@ -5951,16 +6048,36 @@
       ],
       "selected_at": "2026-11-12",
       "realized_pnl_cumulative": 0.0,
-      "last_updated_at": "2026-11-13T11:00:48+05:30",
+      "last_updated_at": "2026-11-13T13:33:22+05:30",
       "regime_metrics": {
         "enabled": true,
         "current_regime": "Bear",
         "smoothed_normalized_macd": 0.003359076007048688,
         "smoothed_rsi": 72.22696323935551,
         "data_date": "2026-11-12",
-        "updated_at": "2026-11-13T05:30:48+00:00"
+        "recent_sessions": [
+          {
+            "date": "2026-11-11",
+            "smoothed_normalized_macd": 0.000710154636647741,
+            "smoothed_rsi": 70.50790149416346,
+            "macd_meets_bull": false,
+            "rsi_meets_bull": true,
+            "bull_signal": false,
+            "confirmed_regime": "Bear"
+          },
+          {
+            "date": "2026-11-12",
+            "smoothed_normalized_macd": 0.003359076007048688,
+            "smoothed_rsi": 72.22696323935551,
+            "macd_meets_bull": true,
+            "rsi_meets_bull": true,
+            "bull_signal": true,
+            "confirmed_regime": "Bear"
+          }
+        ],
+        "updated_at": "2026-11-13T08:03:22+00:00"
       }
     }
   },
-  "last_updated_at": "2026-11-13T05:30:48+00:00"
+  "last_updated_at": "2026-11-13T08:03:22+00:00"
 }
