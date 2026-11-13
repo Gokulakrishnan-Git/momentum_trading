@@ -238,15 +238,11 @@ def mark_closed_market(test: dict, test_state: dict, history: dict, now: datetim
         fallback.update({ticker: float(latest_close[ticker]) for ticker in tickers
                          if ticker in latest_close and pd.notna(latest_close[ticker])})
 
-    benchmark_ticker = "^GSPC"
+    benchmark_ticker = cfg["index"]
     benchmark_fallback = fallback.copy()
-    sp500_path = DATA_DIR / "SP500_index_close.csv"
-    if sp500_path.exists():
-        saved = _read_frame(sp500_path).iloc[:, 0].dropna()
-        if not saved.empty:
-            benchmark_fallback[benchmark_ticker] = float(saved.iloc[-1])
-    elif "benchmark" in history and not history["benchmark"].dropna().empty:
-        benchmark_fallback[benchmark_ticker] = float(history["benchmark"].dropna().iloc[-1])
+    benchmark_history = history.get("benchmark", pd.Series(dtype=float)).dropna()
+    if not benchmark_history.empty:
+        benchmark_fallback[benchmark_ticker] = float(benchmark_history.iloc[-1])
 
     fetched, _, _ = current_quotes(tickers + [benchmark_ticker], benchmark_fallback)
     prices = {ticker: fetched[ticker] for ticker in tickers if ticker in fetched}
@@ -266,6 +262,7 @@ def mark_closed_market(test: dict, test_state: dict, history: dict, now: datetim
         "pnl_pct": equity / initial_capital - 1 if initial_capital else 0.0,
         "cash": cash, "unrealized_pnl": unrealized, "realized_pnl": realized,
         "holdings": len(positions), "prices": prices,
+        "benchmark_ticker": benchmark_ticker,
         "benchmark_value": fetched.get(benchmark_ticker),
     })
     test_state["snapshots"] = test_state["snapshots"][-20000:]
@@ -367,6 +364,7 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
             "smoothed_normalized_macd": None,
             "smoothed_rsi": None,
             "data_date": None,
+            "recent_sessions": [],
             "updated_at": now.isoformat(timespec="seconds"),
         }
         if not benchmark.empty:
@@ -377,11 +375,34 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
             live_regime = str(regime_value) if pd.notna(regime_value) else None
             smoothed_macd = regime_row.get("Smoothed_MACD")
             smoothed_rsi = regime_row.get("Smoothed_RSI")
+            recent_sessions = []
+            bull_macd_threshold = float(REGIME_CONFIG["bull_macd_threshold"])
+            bull_rsi_threshold = float(REGIME_CONFIG["bull_rsi_threshold"])
+            confirmation_sessions = int(REGIME_CONFIG["bull_confirmation_days"])
+            for session_date, session in regime_history.tail(confirmation_sessions).iterrows():
+                session_macd = session.get("Smoothed_MACD")
+                session_rsi = session.get("Smoothed_RSI")
+                session_macd = float(session_macd) if pd.notna(session_macd) else None
+                session_rsi = float(session_rsi) if pd.notna(session_rsi) else None
+                macd_passes = None if session_macd is None else session_macd >= bull_macd_threshold
+                rsi_passes = None if session_rsi is None else session_rsi >= bull_rsi_threshold
+                bull_signal = None if macd_passes is None or rsi_passes is None else macd_passes and rsi_passes
+                confirmed = session.get("Regime")
+                recent_sessions.append({
+                    "date": pd.Timestamp(session_date).date().isoformat(),
+                    "smoothed_normalized_macd": session_macd,
+                    "smoothed_rsi": session_rsi,
+                    "macd_meets_bull": macd_passes,
+                    "rsi_meets_bull": rsi_passes,
+                    "bull_signal": bull_signal,
+                    "confirmed_regime": str(confirmed) if pd.notna(confirmed) else None,
+                })
             regime_metrics.update({
                 "current_regime": live_regime,
                 "smoothed_normalized_macd": float(smoothed_macd) if pd.notna(smoothed_macd) else None,
                 "smoothed_rsi": float(smoothed_rsi) if pd.notna(smoothed_rsi) else None,
                 "data_date": pd.Timestamp(regime_date).date().isoformat(),
+                "recent_sessions": recent_sessions,
             })
     test_state["regime_metrics"] = regime_metrics
 
@@ -417,20 +438,14 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
                             for ticker in quote_tickers
                             if ticker in open_prices and pd.notna(open_prices.loc[date, ticker])})
     benchmark_ticker = history["config"]["index"]
-    comparison_ticker = "^GSPC"
     benchmark_series = history["benchmark"].dropna()
     if date in benchmark_series.index:
         fallback_prices[benchmark_ticker] = float(benchmark_series.loc[date])
     elif not benchmark_series.empty:
         fallback_prices[benchmark_ticker] = float(benchmark_series.iloc[-1])
-    sp500_path = DATA_DIR / "SP500_index_close.csv"
-    if comparison_ticker not in fallback_prices and sp500_path.exists():
-        sp500_saved = _read_frame(sp500_path).iloc[:, 0].dropna()
-        if not sp500_saved.empty:
-            fallback_prices[comparison_ticker] = float(sp500_saved.iloc[-1])
     fetched_prices, intraday_highs, intraday_lows = current_quotes(
-        quote_tickers + [benchmark_ticker, comparison_ticker], fallback_prices)
-    benchmark_price = fetched_prices.get(comparison_ticker)
+        quote_tickers + [benchmark_ticker], fallback_prices)
+    benchmark_price = fetched_prices.get(benchmark_ticker)
     prices = {ticker: fetched_prices[ticker] for ticker in quote_tickers if ticker in fetched_prices}
     if date in open_prices.index:
         for ticker, value in intraday_highs.items():
@@ -530,7 +545,8 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
         "pnl_pct": equity / float(test_state["initial_capital"]) - 1,
         "cash": float(engine.cash), "unrealized_pnl": float(unrealized),
         "realized_pnl": float(realized), "holdings": len(engine.positions),
-        "prices": prices, "benchmark_value": benchmark_price,
+        "prices": prices, "benchmark_ticker": benchmark_ticker,
+        "benchmark_value": benchmark_price,
     })
     test_state["snapshots"] = test_state["snapshots"][-20000:]
     test_state["last_updated_at"] = stamp

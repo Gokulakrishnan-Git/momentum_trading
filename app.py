@@ -334,8 +334,10 @@ def refresh_forward_display(test: dict, test_state: dict) -> tuple[dict | None, 
                 if value is not None}
     fallback.update({ticker: float(value) for ticker, value in persisted_latest.get("prices", {}).items()
                     if value is not None})
-    benchmark_ticker = "^GSPC"
-    if persisted_latest.get("benchmark_value") is not None:
+    benchmark_ticker = FORWARD_UNIVERSES.get(test.get("universe", "SP500"), {}).get("index", "^GSPC")
+    persisted_benchmark_ticker = persisted_latest.get("benchmark_ticker", "^GSPC")
+    if (persisted_latest.get("benchmark_value") is not None
+            and persisted_benchmark_ticker == benchmark_ticker):
         fallback[benchmark_ticker] = float(persisted_latest["benchmark_value"])
     if not tracked_tickers:
         return persisted_latest or None, ""
@@ -366,6 +368,7 @@ def refresh_forward_display(test: dict, test_state: dict) -> tuple[dict | None, 
         "realized_pnl": float(test_state.get("realized_pnl_cumulative", 0.0)),
         "holdings": len(positions),
         "prices": prices,
+        "benchmark_ticker": benchmark_ticker,
         "benchmark_value": fetched.get(benchmark_ticker),
     }
     # This page-load mark is display-only. The scheduled GitHub Action remains
@@ -825,6 +828,21 @@ def render_forward_tab():
                         f"Bear: MACD ≤ {bear_macd:.2f}% and RSI ≤ {bear_rsi:.0f} for {bear_days} consecutive sessions. "
                         "Intermediate signals keep the prior regime; indicators use the benchmark index."
                     )
+                    recent_sessions = regime_metrics.get("recent_sessions", [])
+                    if recent_sessions:
+                        recent_rows = [{
+                            "Session": row.get("date"),
+                            "Smoothed MACD (%)": (float(row["smoothed_normalized_macd"]) * 100
+                                                   if row.get("smoothed_normalized_macd") is not None else None),
+                            f"MACD ≥ {bull_macd:.2f}%": row.get("macd_meets_bull"),
+                            "Smoothed RSI": row.get("smoothed_rsi"),
+                            f"RSI ≥ {bull_rsi:.0f}": row.get("rsi_meets_bull"),
+                            "Bull signal": row.get("bull_signal"),
+                            "Confirmed regime": row.get("confirmed_regime") or "Unconfirmed",
+                        } for row in recent_sessions]
+                        st.dataframe(pd.DataFrame(recent_rows), use_container_width=True, hide_index=True)
+                    else:
+                        st.caption("The two-session regime history will appear after the next forward-test update.")
                     if regime_metrics.get("data_date"):
                         updated_at = regime_metrics.get("updated_at")
                         update_note = f" · calculated {updated_at}" if updated_at else ""
@@ -901,29 +919,35 @@ def render_forward_tab():
                     snapshots = test_state.get("snapshots", [])
                     st.metric("Next rebalance date", test_state.get("next_rebalance_date") or "Pending")
                     initial_capital = float(params.get("initial_capital", 0))
+                    benchmark_ticker = FORWARD_UNIVERSES.get(test.get("universe", "SP500"), {}).get("index", "^GSPC")
+                    benchmark_name = UNIVERSES.get(test.get("universe", "SP500"), {}).get("benchmark", "Benchmark")
+                    benchmark_return_label = f"{benchmark_name} return (%)"
                     curve_rows = [{
                         "Time": pd.to_datetime(row["timestamp"], utc=True).tz_convert("Asia/Kolkata"),
                         "Portfolio value": float(row["portfolio_value"]),
                         "Portfolio P&L": float(row["portfolio_value"]) - initial_capital,
                         "Portfolio return (%)": 100 * (float(row["portfolio_value"]) / initial_capital - 1),
-                        "Benchmark value": row.get("benchmark_value"),
+                        "Benchmark value": (row.get("benchmark_value")
+                                             if row.get("benchmark_ticker", "^GSPC") == benchmark_ticker else None),
                     } for row in snapshots if row.get("timestamp") and initial_capital > 0]
                     if curve_rows:
                         curve = pd.DataFrame(curve_rows).set_index("Time")
-                        benchmark_values = pd.to_numeric(curve["Benchmark value"], errors="coerce")
-                        benchmark_values = benchmark_values.dropna()
+                        benchmark_values = pd.to_numeric(curve["Benchmark value"], errors="coerce").dropna()
                         if not benchmark_values.empty and float(benchmark_values.iloc[0]) > 0:
-                            curve["S&P 500 return (%)"] = 100 * (pd.to_numeric(curve["Benchmark value"], errors="coerce") / float(benchmark_values.iloc[0]) - 1)
+                            curve[benchmark_return_label] = 100 * (
+                                pd.to_numeric(curve["Benchmark value"], errors="coerce")
+                                / float(benchmark_values.iloc[0]) - 1
+                            )
                         curve = curve.drop(columns=["Benchmark value", "Portfolio value"])
                         st.subheader("Portfolio P&L")
                         st.caption(f"Cumulative paper P&L from the frozen starting capital, in {currency}.")
                         fixed_chart(curve[["Portfolio P&L"]], kind="area", height=220)
-                        st.subheader("Portfolio return vs S&P 500")
+                        st.subheader(f"Portfolio return vs {benchmark_name}")
                         return_series = ["Portfolio return (%)"]
-                        if "S&P 500 return (%)" in curve:
-                            return_series.append("S&P 500 return (%)")
+                        if benchmark_return_label in curve:
+                            return_series.append(benchmark_return_label)
                         fixed_chart(curve[return_series], height=260)
-                        st.caption("Returns are percentages from the starting capital / first S&P 500 reading. The Total P&L metric above shows both the currency amount and percentage.")
+                        st.caption(f"Returns are percentages from the starting capital / first {benchmark_name} reading. The Total P&L metric above shows both the currency amount and percentage.")
                     selected_tickers = test_state.get("selected_tickers") or list(test_state.get("positions", {}))
                     if selected_tickers:
                         st.markdown(f"**Top {len(selected_tickers)} selected** · {test_state.get('selected_at', 'selection date pending')}")
