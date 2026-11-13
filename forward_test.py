@@ -354,6 +354,34 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
     if date not in open_prices.index:
         raise RuntimeError(f"Yahoo Finance has not published today’s {universe} opening bars yet.")
 
+    live_regime = "OFF"
+    regime_metrics = None
+    if params.get("use_regime_filter", False):
+        benchmark = history.get("benchmark", pd.Series(dtype=float)).dropna()
+        regime_metrics = {
+            "enabled": True,
+            "current_regime": None,
+            "smoothed_normalized_macd": None,
+            "smoothed_rsi": None,
+            "data_date": None,
+            "updated_at": now.isoformat(timespec="seconds"),
+        }
+        if not benchmark.empty:
+            regime_history = MarketRegime(**REGIME_CONFIG).detect(benchmark)
+            regime_date = date if date in regime_history.index else regime_history.index[-1]
+            regime_row = regime_history.loc[regime_date]
+            regime_value = regime_row.get("Regime")
+            live_regime = str(regime_value) if pd.notna(regime_value) else None
+            smoothed_macd = regime_row.get("Smoothed_MACD")
+            smoothed_rsi = regime_row.get("Smoothed_RSI")
+            regime_metrics.update({
+                "current_regime": live_regime,
+                "smoothed_normalized_macd": float(smoothed_macd) if pd.notna(smoothed_macd) else None,
+                "smoothed_rsi": float(smoothed_rsi) if pd.notna(smoothed_rsi) else None,
+                "data_date": pd.Timestamp(regime_date).date().isoformat(),
+            })
+    test_state["regime_metrics"] = regime_metrics
+
     # Keep the strategy in one place: this is the same indicator, eligibility,
     # ranking, portfolio score threshold, and score-weight allocator as the backtester.
     strategy = MomentumStrategy(top_n=params["top_n"],
@@ -418,17 +446,6 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
         if selection is not None:
             test_state["selected_tickers"] = selection.index.astype(str).tolist()
             test_state["selected_at"] = date.date().isoformat()
-            live_regime = "OFF"
-            if params["use_regime_filter"]:
-                benchmark = history["benchmark"].dropna()
-                if not benchmark.empty:
-                    # Use the most recent benchmark value available to the runner.
-                    if date in benchmark.index:
-                        current_regime = MarketRegime(**REGIME_CONFIG).detect(benchmark)
-                        live_regime = str(current_regime.loc[date, "Regime"])
-                    else:
-                        current_regime = MarketRegime(**REGIME_CONFIG).detect(benchmark)
-                        live_regime = str(current_regime.iloc[-1]["Regime"])
             # Rebalance-day fills use the published daily opening prices exactly.
             opening_prices = {
                 ticker: float(open_prices.loc[date, ticker])

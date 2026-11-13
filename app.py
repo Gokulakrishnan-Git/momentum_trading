@@ -17,7 +17,7 @@ import yfinance as yf
 import altair as alt
 from forward_test import STATE_PATH as FORWARD_STATE_PATH, UNIVERSES as FORWARD_UNIVERSES, current_quotes, market_state
 
-from strategy_engine import run_strategy_backtest
+from strategy_engine import REGIME_CONFIG, run_strategy_backtest
 from sp500_history import membership_mask, prepare_sp500_history
 
 
@@ -801,16 +801,40 @@ def render_forward_tab():
                                 st.rerun()
                 open_now, market_message = market_state(datetime.now(timezone.utc), test.get("universe", "SP500"))
                 (st.success if open_now else st.info)(market_message)
-                if (test.get("universe") == "NIFTY500"
-                        and params.get("use_regime_filter", False)
-                        and params.get("allowed_regimes")
-                        and test_state.get("selected_tickers")
-                        and not test_state.get("positions")):
-                    allowed_regimes = ", ".join(params["allowed_regimes"])
-                    st.info(
-                        f"Waiting for {allowed_regimes} regime. This test's market-regime filter is enabled, "
-                        "so it will stay in cash until an allowed regime is detected."
+                regime_metrics = test_state.get("regime_metrics") or {}
+                if params.get("use_regime_filter", False):
+                    regime_label = regime_metrics.get("current_regime") or "Awaiting confirmation"
+                    macd_value = regime_metrics.get("smoothed_normalized_macd")
+                    rsi_value = regime_metrics.get("smoothed_rsi")
+                    macd_display = f"{float(macd_value) * 100:.3f}%" if macd_value is not None else "Unavailable"
+                    rsi_display = f"{float(rsi_value):.2f}" if rsi_value is not None else "Unavailable"
+                    regime_col, macd_col, rsi_col = st.columns(3)
+                    regime_col.metric("Current benchmark regime", regime_label)
+                    macd_col.metric("Smoothed normalized MACD", macd_display)
+                    rsi_col.metric("Smoothed RSI", rsi_display)
+                    bull_macd = float(REGIME_CONFIG["bull_macd_threshold"]) * 100
+                    bear_macd = float(REGIME_CONFIG["bear_macd_threshold"]) * 100
+                    bull_rsi = float(REGIME_CONFIG["bull_rsi_threshold"])
+                    bear_rsi = float(REGIME_CONFIG["bear_rsi_threshold"])
+                    bull_days = int(REGIME_CONFIG["bull_confirmation_days"])
+                    bear_days = int(REGIME_CONFIG["bear_confirmation_days"])
+                    st.caption(
+                        f"Bull: MACD ≥ {bull_macd:.2f}% and RSI ≥ {bull_rsi:.0f} for {bull_days} consecutive sessions. "
+                        f"Bear: MACD ≤ {bear_macd:.2f}% and RSI ≤ {bear_rsi:.0f} for {bear_days} consecutive sessions. "
+                        "Intermediate signals keep the prior regime; indicators use the benchmark index."
                     )
+                    if regime_metrics.get("data_date"):
+                        updated_at = regime_metrics.get("updated_at")
+                        update_note = f" · calculated {updated_at}" if updated_at else ""
+                        st.caption(f"Regime inputs through {regime_metrics['data_date']}{update_note}.")
+                    allowed_regimes = params.get("allowed_regimes", [])
+                    current_regime = regime_metrics.get("current_regime")
+                    if (allowed_regimes and test_state.get("selected_tickers")
+                            and not test_state.get("positions") and current_regime not in allowed_regimes):
+                        st.info(
+                            f"Waiting for an allowed regime ({', '.join(allowed_regimes)}). "
+                            f"Current benchmark regime: {current_regime or 'not confirmed yet'}; the test stays in cash."
+                        )
                 if price_refresh_message:
                     st.caption(price_refresh_message)
                 allocation_display = next((label for label, method in allocation_labels.items()
