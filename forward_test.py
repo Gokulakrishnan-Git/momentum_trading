@@ -429,11 +429,17 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
                     else:
                         current_regime = MarketRegime(**REGIME_CONFIG).detect(benchmark)
                         live_regime = str(current_regime.iloc[-1]["Regime"])
+            # Rebalance-day fills use the published daily opening prices exactly.
+            opening_prices = {
+                ticker: float(open_prices.loc[date, ticker])
+                for ticker in quote_tickers
+                if ticker in open_prices.columns and pd.notna(open_prices.loc[date, ticker])
+            }
+            opening_price_row = pd.DataFrame([opening_prices], index=[date])
             if params["use_regime_filter"] and live_regime not in params["allowed_regimes"]:
-                sell_prices = {ticker: price * (1 - params.get("simulated_slippage_bps", 5.0) / 10000)
-                               for ticker, price in prices.items()}
-                engine.sell_positions(list(engine.positions), price_row, date,
-                                      execution_prices=sell_prices, sell_reason="REGIME_EXIT")
+                sellable = [ticker for ticker in engine.positions if ticker in opening_prices]
+                engine.sell_positions(sellable, opening_price_row, date,
+                                      execution_prices=opening_prices, sell_reason="REGIME_EXIT")
             else:
                 allocator_factories = {
                     "equal_weight": EqualWeightAllocator,
@@ -446,13 +452,11 @@ def process_test(test: dict, test_state: dict, history: dict, now: datetime) -> 
                 if allocator_type is None:
                     raise ValueError(f"Unsupported portfolio allocation method: {allocation_method}")
                 weights = allocator_type().allocate(selection, open_prices, date)
-                buys = {ticker: prices[ticker] * (1 + params.get("simulated_slippage_bps", 5.0) / 10000)
-                        for ticker in weights if ticker in prices}
-                sells = {ticker: prices[ticker] * (1 - params.get("simulated_slippage_bps", 5.0) / 10000)
-                         for ticker in prices}
-                if len(buys) == len(weights):
-                    engine.rebalance(weights, price_row, date,
-                                     buy_execution_prices=buys, sell_execution_prices=sells,
+                all_required_opens = set(weights) | set(engine.positions)
+                if all(ticker in opening_prices for ticker in all_required_opens):
+                    engine.rebalance(weights, opening_price_row, date,
+                                     buy_execution_prices=opening_prices,
+                                     sell_execution_prices=opening_prices,
                                      fractional_shares=(universe == "SP500" and
                                                         params.get("fractional_shares", False)))
 
