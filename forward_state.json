@@ -2913,6 +2913,24 @@
             "CAH": 278.20001220703125
           },
           "benchmark_value": 7591.85986328125
+        },
+        {
+          "timestamp": "2026-11-12T23:59:42-05:00",
+          "portfolio_value": 913906.5423170225,
+          "pnl": -86093.45768297755,
+          "pnl_pct": -0.08609345768297749,
+          "cash": 156.01102124611498,
+          "unrealized_pnl": -2492.752940521183,
+          "realized_pnl": -83515.58526045624,
+          "holdings": 5,
+          "prices": {
+            "SWK": 113.05000305175781,
+            "MTD": 1731.72998046875,
+            "MRNA": 231.3800048828125,
+            "BBY": 103.41000366210938,
+            "CAH": 278.20001220703125
+          },
+          "benchmark_value": 7591.85986328125
         }
       ],
       "last_prices": {
@@ -2962,7 +2980,7 @@
       ],
       "selected_at": "2026-11-11",
       "realized_pnl_cumulative": -83515.58526045624,
-      "last_updated_at": "2026-11-12T21:11:05-05:00"
+      "last_updated_at": "2026-11-12T23:59:42-05:00"
     },
     "14fc19b254e4": {
       "cash": 3.973117429723061e-06,
@@ -5282,6 +5300,25 @@
             "CAH": 278.20001220703125
           },
           "benchmark_value": 7591.85986328125
+        },
+        {
+          "timestamp": "2026-11-12T23:59:42-05:00",
+          "portfolio_value": 448.99227805023537,
+          "pnl": -51.00772194976463,
+          "pnl_pct": -0.10201544389952921,
+          "cash": 3.973117429723061e-06,
+          "unrealized_pnl": -1.2867738810029774,
+          "realized_pnl": -43.396927245944326,
+          "holdings": 6,
+          "prices": {
+            "CRL": 340.8299865722656,
+            "SWK": 113.05000305175781,
+            "MTD": 1731.72998046875,
+            "MRNA": 231.3800048828125,
+            "BBY": 103.41000366210938,
+            "CAH": 278.20001220703125
+          },
+          "benchmark_value": 7591.85986328125
         }
       ],
       "last_prices": {
@@ -5327,7 +5364,7 @@
       ],
       "selected_at": "2026-11-11",
       "realized_pnl_cumulative": -43.396927245944326,
-      "last_updated_at": "2026-11-12T21:11:05-05:00"
+      "last_updated_at": "2026-11-12T23:59:42-05:00"
     },
     "142cf22662ca": {
       "cash": 100000.0,
@@ -5532,6 +5569,18 @@
           "holdings": 0,
           "prices": {},
           "benchmark_value": 7617.83984375
+        },
+        {
+          "timestamp": "2026-11-13T10:29:42+05:30",
+          "portfolio_value": 100000.0,
+          "pnl": 0.0,
+          "pnl_pct": 0.0,
+          "cash": 100000.0,
+          "unrealized_pnl": 0.0,
+          "realized_pnl": 0.0,
+          "holdings": 0,
+          "prices": {},
+          "benchmark_value": 7591.85986328125
         }
       ],
       "last_prices": {
@@ -5561,7 +5610,15 @@
       ],
       "selected_at": "2026-11-09",
       "realized_pnl_cumulative": 0.0,
-      "last_updated_at": "2026-11-12T11:43:12+05:30"
+      "last_updated_at": "2026-11-13T10:29:42+05:30",
+      "regime_metrics": {
+        "enabled": true,
+        "current_regime": "Bull",
+        "smoothed_normalized_macd": 0.005870510721200921,
+        "smoothed_rsi": 72.40930154269034,
+        "data_date": "2026-11-13",
+        "updated_at": "2026-11-13T04:59:42+00:00"
+      }
     },
     "7ef56d53b234": {
       "cash": 100000.0,
@@ -5778,6 +5835,18 @@
             "PVRINOX.NS": 1598.0
           },
           "benchmark_value": 7617.83984375
+        },
+        {
+          "timestamp": "2026-11-13T10:29:42+05:30",
+          "portfolio_value": 100000.0,
+          "pnl": 0.0,
+          "pnl_pct": 0.0,
+          "cash": 100000.0,
+          "unrealized_pnl": 0.0,
+          "realized_pnl": 0.0,
+          "holdings": 0,
+          "prices": {},
+          "benchmark_value": 7591.85986328125
         }
       ],
       "last_prices": {
@@ -5809,8 +5878,16 @@
       ],
       "selected_at": "2026-11-12",
       "realized_pnl_cumulative": 0.0,
-      "last_updated_at": "2026-11-12T11:43:12+05:30"
+      "last_updated_at": "2026-11-13T10:29:42+05:30",
+      "regime_metrics": {
+        "enabled": true,
+        "current_regime": "Bull",
+        "smoothed_normalized_macd": 0.005870510721200921,
+        "smoothed_rsi": 72.40930154269034,
+        "data_date": "2026-11-13",
+        "updated_at": "2026-11-13T04:59:42+00:00"
+      }
     }
   },
-  "last_updated_at": "2026-11-13T02:11:05+00:00"
+  "last_updated_at": "2026-11-13T04:59:42+00:00"
 }
