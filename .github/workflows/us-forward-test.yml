@@ -31,9 +31,9 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .forward_market_cache
-          key: forward-market-${{ runner.os }}-${{ steps.market-date.outputs.date }}
+          key: forward-market-v2-${{ runner.os }}-${{ steps.market-date.outputs.date }}
           restore-keys: |
-            forward-market-${{ runner.os }}-
+            forward-market-v2-${{ runner.os }}-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"

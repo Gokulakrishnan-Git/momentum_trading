@@ -136,7 +136,11 @@ def load_market_history(universe: str) -> dict:
     benchmark_path = DATA_DIR / f"{universe}_index_close.csv"
     benchmark_base = _read_frame(benchmark_path).iloc[:, 0].astype(float)
     benchmark_saved = benchmark_base.copy()
-    benchmark_cache_path = CACHE_DIR / f"{universe}_benchmark.csv"
+    # Key the daily benchmark cache by its source ticker. The legacy cache
+    # name could survive an index-symbol change (for example, NIFTY 500) and
+    # silently mix closes from two different benchmarks.
+    ticker_cache_key = "".join(character for character in cfg["index"] if character.isalnum())
+    benchmark_cache_path = CACHE_DIR / f"{universe}_benchmark_{ticker_cache_key}.csv"
     if benchmark_cache_path.exists():
         benchmark_cache = _read_frame(benchmark_cache_path).iloc[:, 0].astype(float)
         if not benchmark_base.empty:
