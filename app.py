@@ -11,13 +11,14 @@ import uuid
 from zoneinfo import ZoneInfo
 
 import pandas as pd
+import pandas_market_calendars as mcal
 import requests
 import streamlit as st
 import yfinance as yf
 import altair as alt
 from forward_test import STATE_PATH as FORWARD_STATE_PATH, UNIVERSES as FORWARD_UNIVERSES, current_quotes, market_state
 
-from strategy_engine import REGIME_CONFIG, run_strategy_backtest
+from strategy_engine import MarketRegime, REGIME_CONFIG, run_strategy_backtest
 from sp500_history import membership_mask, prepare_sp500_history
 
 
@@ -375,6 +376,103 @@ def refresh_forward_display(test: dict, test_state: dict) -> tuple[dict | None, 
     # the writer of the durable portfolio state and trade history.
     test_state["snapshots"] = [*snapshots, live_snapshot]
     return live_snapshot, f"Latest available Yahoo Finance prices checked at {checked_at} (display refresh)."
+
+
+def refresh_forward_regime_metrics(test: dict, test_state: dict, now: datetime) -> tuple[dict, str]:
+    """Recalculate display-only regime diagnostics from the latest completed daily benchmark bars."""
+    existing = test_state.get("regime_metrics") or {}
+    if not test.get("parameters", {}).get("use_regime_filter", False):
+        return existing, ""
+
+    universe = test.get("universe", "SP500")
+    cfg = FORWARD_UNIVERSES.get(universe)
+    data_path = DATA_DIR / f"{universe}_index_close.csv"
+    try:
+        if not cfg or not data_path.exists():
+            return existing, "Saved benchmark history is unavailable; showing the last saved regime diagnostics."
+        saved = _read_csv(data_path)
+        benchmark = saved.iloc[:, 0].astype(float) if not saved.empty else pd.Series(dtype=float)
+        benchmark.index = pd.to_datetime(benchmark.index).tz_localize(None).normalize()
+
+        # Pull the latest daily bars on every page render. This keeps the display
+        # current even when the scheduled Actions runner has not run yet.
+        bars = yf.download(
+            cfg["index"], period="10d", interval="1d", auto_adjust=True,
+            progress=False, threads=True,
+        )
+        if bars is not None and not bars.empty:
+            close = bars["Close"]
+            if isinstance(close, pd.DataFrame):
+                close = close.iloc[:, 0]
+            fresh = close.dropna().astype(float).copy()
+            fresh.index = pd.to_datetime(fresh.index)
+            if fresh.index.tz is not None:
+                fresh.index = fresh.index.tz_localize(None)
+            fresh.index = fresh.index.normalize()
+            benchmark = pd.concat([benchmark, fresh]).sort_index()
+            benchmark = benchmark.loc[~benchmark.index.duplicated(keep="last")]
+
+        local_now = now.astimezone(ZoneInfo(cfg["timezone"]))
+        today = pd.Timestamp(local_now.date())
+        schedule = mcal.get_calendar(cfg["calendar"]).schedule(
+            start_date=local_now.date(), end_date=local_now.date()
+        )
+        # During a trading session, only completed prior sessions may drive
+        # the displayed regime. After the close, today's finalized close joins
+        # the history. Weekends and exchange holidays naturally use the latest
+        # two rows in the benchmark series (for example Thu/Fri).
+        if not schedule.empty:
+            close_at = pd.Timestamp(schedule.iloc[0]["market_close"]).to_pydatetime()
+            close_at = close_at.astimezone(local_now.tzinfo)
+            if local_now < close_at:
+                benchmark = benchmark.loc[benchmark.index < today]
+            else:
+                benchmark = benchmark.loc[benchmark.index <= today]
+
+        benchmark = benchmark.dropna().sort_index()
+        if benchmark.empty:
+            return existing, "No completed benchmark bars are available; showing the last saved regime diagnostics."
+
+        regime_history = MarketRegime(**REGIME_CONFIG).detect(benchmark)
+        if regime_history.empty:
+            return existing, "Not enough benchmark history to calculate regime diagnostics."
+        row = regime_history.iloc[-1]
+        macd_threshold = float(REGIME_CONFIG["bull_macd_threshold"])
+        rsi_threshold = float(REGIME_CONFIG["bull_rsi_threshold"])
+        recent_sessions = []
+        for session_date, session in regime_history.tail(int(REGIME_CONFIG["bull_confirmation_days"])).iterrows():
+            macd = session.get("Smoothed_MACD")
+            rsi = session.get("Smoothed_RSI")
+            macd = float(macd) if pd.notna(macd) else None
+            rsi = float(rsi) if pd.notna(rsi) else None
+            macd_passes = None if macd is None else macd >= macd_threshold
+            rsi_passes = None if rsi is None else rsi >= rsi_threshold
+            signal = None if macd_passes is None or rsi_passes is None else macd_passes and rsi_passes
+            confirmed = session.get("Regime")
+            recent_sessions.append({
+                "date": pd.Timestamp(session_date).date().isoformat(),
+                "smoothed_normalized_macd": macd,
+                "smoothed_rsi": rsi,
+                "macd_meets_bull": macd_passes,
+                "rsi_meets_bull": rsi_passes,
+                "bull_signal": signal,
+                "confirmed_regime": str(confirmed) if pd.notna(confirmed) else None,
+            })
+
+        regime = row.get("Regime")
+        macd = row.get("Smoothed_MACD")
+        rsi = row.get("Smoothed_RSI")
+        return {
+            "enabled": True,
+            "current_regime": str(regime) if pd.notna(regime) else None,
+            "smoothed_normalized_macd": float(macd) if pd.notna(macd) else None,
+            "smoothed_rsi": float(rsi) if pd.notna(rsi) else None,
+            "data_date": pd.Timestamp(regime_history.index[-1]).date().isoformat(),
+            "recent_sessions": recent_sessions,
+            "updated_at": now.astimezone(ZoneInfo(cfg["timezone"])).isoformat(timespec="seconds"),
+        }, ""
+    except Exception as error:
+        return existing, f"Regime display refresh failed; showing the last saved diagnostics ({error})."
 
 
 st.set_page_config(page_title="Momentum strategy", page_icon="📈", layout="wide")
@@ -806,7 +904,11 @@ def render_forward_tab():
                                 st.rerun()
                 open_now, market_message = market_state(datetime.now(timezone.utc), test.get("universe", "SP500"))
                 (st.success if open_now else st.info)(market_message)
-                regime_metrics = test_state.get("regime_metrics") or {}
+                regime_metrics, regime_refresh_message = refresh_forward_regime_metrics(
+                    test, test_state, datetime.now(timezone.utc)
+                )
+                if regime_refresh_message:
+                    st.caption(regime_refresh_message)
                 if params.get("use_regime_filter", False):
                     regime_label = regime_metrics.get("current_regime") or "Awaiting confirmation"
                     macd_value = regime_metrics.get("smoothed_normalized_macd")
