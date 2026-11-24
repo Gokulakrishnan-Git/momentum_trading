@@ -2,33 +2,33 @@
   "schema_version": 2,
   "tests": {
     "11276352bde9": {
-      "cash": 180.7931217935984,
+      "cash": 43.50550380523782,
       "initial_capital": 1000000.0,
       "positions": {
         "MTD": {
-          "shares": 105,
+          "shares": 98,
           "entry_price": 1758.4587460327148,
           "buy_date": "2026-11-11"
         },
-        "GEHC": {
-          "shares": 2141,
-          "entry_price": 83.66000366210938,
-          "buy_date": "2026-11-19"
+        "DLTR": {
+          "shares": 1201,
+          "entry_price": 149.99000549316406,
+          "buy_date": "2026-11-24"
         },
-        "TSCO": {
-          "shares": 4506,
-          "entry_price": 38.10200119018555,
-          "buy_date": "2026-11-19"
+        "CDW": {
+          "shares": 1028,
+          "entry_price": 169.94000244140625,
+          "buy_date": "2026-11-24"
         },
-        "STE": {
-          "shares": 659,
-          "entry_price": 258.8800048828125,
-          "buy_date": "2026-11-19"
+        "GILD": {
+          "shares": 961,
+          "entry_price": 171.75999450683594,
+          "buy_date": "2026-11-24"
         },
-        "ABNB": {
-          "shares": 929,
-          "entry_price": 182.8000030517578,
-          "buy_date": "2026-11-19"
+        "BIIB": {
+          "shares": 630,
+          "entry_price": 259.8299865722656,
+          "buy_date": "2026-11-24"
         }
       },
       "trades": [
@@ -1312,6 +1312,213 @@
           "VAT_GST": 0.0,
           "OtherFees": 0.18858700000000003,
           "TotalFees": 3.440087,
+          "RealizedPnL": 0.0,
+          "ReturnPct": 0.0,
+          "Reason": "ENTRY",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "SELL",
+          "Ticker": "ABNB",
+          "Shares": 929,
+          "Price": 173.36000061035156,
+          "TradeValue": 161051.4405670166,
+          "Commission": 3.2515,
+          "TransactionTaxes": 322.1028811340332,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 3.317659675680542,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.369742,
+          "TotalFees": 329.04178280971377,
+          "RealizedPnL": -9098.80405087612,
+          "ReturnPct": -5.357872809152202,
+          "Reason": "REBALANCE",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "SELL",
+          "Ticker": "STE",
+          "Shares": 659,
+          "Price": 255.6300048828125,
+          "TradeValue": 168460.17321777344,
+          "Commission": 2.3065,
+          "TransactionTaxes": 336.9203464355469,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 3.4702795682861325,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.262282,
+          "TotalFees": 342.95940800383306,
+          "RealizedPnL": -2484.7094080038332,
+          "ReturnPct": -1.4564369270515787,
+          "Reason": "REBALANCE",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "SELL",
+          "Ticker": "GEHC",
+          "Shares": 2141,
+          "Price": 80.72000122070312,
+          "TradeValue": 172821.5226135254,
+          "Commission": 7.4935,
+          "TransactionTaxes": 345.6430452270508,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 3.560123365838623,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.852118,
+          "TotalFees": 357.5487865928894,
+          "RealizedPnL": -6652.094013643671,
+          "ReturnPct": -3.7138454935067164,
+          "Reason": "REBALANCE",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "SELL",
+          "Ticker": "TSCO",
+          "Shares": 4506,
+          "Price": 37.834999084472656,
+          "TradeValue": 170484.5058746338,
+          "Commission": 15.771,
+          "TransactionTaxes": 340.96901174926757,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 3.511980821017456,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 1.793388,
+          "TotalFees": 362.04538057028503,
+          "RealizedPnL": -1565.1568689125702,
+          "ReturnPct": -0.911630607351006,
+          "Reason": "REBALANCE",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "SELL",
+          "Ticker": "MTD",
+          "Shares": 7,
+          "Price": 1723.72998046875,
+          "TradeValue": 12066.10986328125,
+          "Commission": 0.35,
+          "TransactionTaxes": 24.1322197265625,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.24856186318359375,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.002786,
+          "TotalFees": 24.733567589746094,
+          "RealizedPnL": -267.8349265374995,
+          "ReturnPct": -2.175890247571841,
+          "Reason": "REBALANCE",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "BUY",
+          "Ticker": "DLTR",
+          "Shares": 1201,
+          "Price": 149.99000549316406,
+          "TradeValue": 180137.99659729004,
+          "Commission": 4.2035,
+          "TransactionTaxes": 0.0,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.0,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.24380300000000002,
+          "TotalFees": 4.447303,
+          "RealizedPnL": 0.0,
+          "ReturnPct": 0.0,
+          "Reason": "ENTRY",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "BUY",
+          "Ticker": "CDW",
+          "Shares": 1028,
+          "Price": 169.94000244140625,
+          "TradeValue": 174698.32250976562,
+          "Commission": 3.598,
+          "TransactionTaxes": 0.0,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.0,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.208684,
+          "TotalFees": 3.8066839999999997,
+          "RealizedPnL": 0.0,
+          "ReturnPct": 0.0,
+          "Reason": "ENTRY",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "BUY",
+          "Ticker": "GILD",
+          "Shares": 961,
+          "Price": 171.75999450683594,
+          "TradeValue": 165061.35472106934,
+          "Commission": 3.3635,
+          "TransactionTaxes": 0.0,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.0,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.195083,
+          "TotalFees": 3.558583,
+          "RealizedPnL": 0.0,
+          "ReturnPct": 0.0,
+          "Reason": "ENTRY",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "BUY",
+          "Ticker": "BIIB",
+          "Shares": 630,
+          "Price": 259.8299865722656,
+          "TradeValue": 163692.89154052734,
+          "Commission": 2.205,
+          "TransactionTaxes": 0.0,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.0,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.12789,
+          "TotalFees": 2.33289,
           "RealizedPnL": 0.0,
           "ReturnPct": 0.0,
           "Reason": "ENTRY",
@@ -3597,6 +3804,29 @@
           },
           "benchmark_ticker": "^GSPC",
           "benchmark_value": 7236.85009765625
+        },
+        {
+          "timestamp": "2026-11-24T09:44:49-05:00",
+          "portfolio_value": 865520.8931533414,
+          "pnl": -134479.10684665863,
+          "pnl_pct": -0.13447910684665865,
+          "cash": 43.50550380523782,
+          "unrealized_pnl": 9557.865169677742,
+          "realized_pnl": -143907.21286933636,
+          "holdings": 5,
+          "prices": {
+            "MTD": 1750.6300048828125,
+            "GEHC": 82.37000274658203,
+            "TSCO": 38.459999084472656,
+            "STE": 259.30999755859375,
+            "ABNB": 175.85000610351562,
+            "DLTR": 153.43499755859375,
+            "CDW": 168.4499969482422,
+            "GILD": 175.4199981689453,
+            "BIIB": 266.5
+          },
+          "benchmark_ticker": "^GSPC",
+          "benchmark_value": 7195.919921875
         }
       ],
       "last_prices": {
@@ -3618,15 +3848,19 @@
         "ALLE": 188.8350067138672,
         "LLY": 1420.1600341796875,
         "SWK": 108.52999877929688,
-        "MTD": 1725.31494140625,
+        "MTD": 1750.6300048828125,
         "BBY": 99.94999694824219,
         "CAH": 271.7099914550781,
-        "GEHC": 81.30999755859375,
-        "TSCO": 37.54999923706055,
-        "STE": 256.739990234375,
-        "ABNB": 174.0800018310547
+        "GEHC": 82.37000274658203,
+        "TSCO": 38.459999084472656,
+        "STE": 259.30999755859375,
+        "ABNB": 175.85000610351562,
+        "DLTR": 153.43499755859375,
+        "CDW": 168.4499969482422,
+        "GILD": 175.4199981689453,
+        "BIIB": 266.5
       },
-      "last_processed_rebalance_date": "2026-11-19",
+      "last_processed_rebalance_date": "2026-11-24",
       "started_at": "2026-10-19T14:13:08+00:00",
       "monthly_volume": [
         {
@@ -3637,24 +3871,24 @@
         {
           "year": 2026,
           "month": 11,
-          "volume": 25253.0
+          "volume": 37315.0
         }
       ],
-      "next_rebalance_date": "2026-11-24",
+      "next_rebalance_date": "2026-11-30",
       "selected_tickers": [
+        "DLTR",
+        "CDW",
         "MTD",
-        "GEHC",
-        "TSCO",
-        "STE",
-        "ABNB"
+        "GILD",
+        "BIIB"
       ],
-      "selected_at": "2026-11-19",
-      "realized_pnl_cumulative": -123838.61360136265,
-      "last_updated_at": "2026-11-23T23:02:09-05:00",
+      "selected_at": "2026-11-24",
+      "realized_pnl_cumulative": -143907.21286933636,
+      "last_updated_at": "2026-11-24T09:44:49-05:00",
       "regime_metrics": null
     },
     "14fc19b254e4": {
-      "cash": 7.636634805407994e-06,
+      "cash": 0.0002562519525497464,
       "initial_capital": 500.0,
       "positions": {
         "CRL": {
@@ -3668,29 +3902,29 @@
           "buy_date": "2026-11-03"
         },
         "MTD": {
-          "shares": 0.051732,
+          "shares": 0.047904,
           "entry_price": 1758.4587460327148,
           "buy_date": "2026-11-11"
         },
-        "GEHC": {
-          "shares": 1.051716,
-          "entry_price": 83.66000366210938,
-          "buy_date": "2026-11-19"
+        "DLTR": {
+          "shares": 0.586204,
+          "entry_price": 149.99000549316406,
+          "buy_date": "2026-11-24"
         },
-        "TSCO": {
-          "shares": 2.213594,
-          "entry_price": 38.10200119018555,
-          "buy_date": "2026-11-19"
+        "CDW": {
+          "shares": 0.502042,
+          "entry_price": 169.94000244140625,
+          "buy_date": "2026-11-24"
         },
-        "STE": {
-          "shares": 0.324149,
-          "entry_price": 258.8800048828125,
-          "buy_date": "2026-11-19"
+        "GILD": {
+          "shares": 0.469308,
+          "entry_price": 171.75999450683594,
+          "buy_date": "2026-11-24"
         },
-        "ABNB": {
-          "shares": 0.4392,
-          "entry_price": 182.8000030517578,
-          "buy_date": "2026-11-19"
+        "BIIB": {
+          "shares": 0.29578,
+          "entry_price": 259.8299865722656,
+          "buy_date": "2026-11-24"
         }
       },
       "trades": [
@@ -4767,6 +5001,213 @@
           "VAT_GST": 0.0,
           "OtherFees": 8.91576e-05,
           "TotalFees": 0.3500891576,
+          "RealizedPnL": 0.0,
+          "ReturnPct": 0.0,
+          "Reason": "ENTRY",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "SELL",
+          "Ticker": "STE",
+          "Shares": 0.324149,
+          "Price": 255.6300048828125,
+          "TradeValue": 82.86221045275879,
+          "Commission": 0.35,
+          "TransactionTaxes": 0.1657244209055176,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.001706961535326831,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.00012901130200000001,
+          "TotalFees": 0.5175603937428445,
+          "RealizedPnL": -1.5710446437428445,
+          "ReturnPct": -1.8721702171539016,
+          "Reason": "REBALANCE",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "SELL",
+          "Ticker": "ABNB",
+          "Shares": 0.4392,
+          "Price": 173.36000061035156,
+          "TradeValue": 76.1397122680664,
+          "Commission": 0.35,
+          "TransactionTaxes": 0.1522794245361328,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.0015684780727221678,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.0001748016,
+          "TotalFees": 0.504022704208855,
+          "RealizedPnL": -4.65007177647448,
+          "ReturnPct": -5.791900953349356,
+          "Reason": "REBALANCE",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "SELL",
+          "Ticker": "GEHC",
+          "Shares": 1.051716,
+          "Price": 80.72000122070312,
+          "TradeValue": 84.89451680383301,
+          "Commission": 0.35,
+          "TransactionTaxes": 0.16978903360766603,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.00174882704615896,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.00041858296800000006,
+          "TotalFees": 0.521956443621825,
+          "RealizedPnL": -3.6140040512878406,
+          "ReturnPct": -4.107449899266125,
+          "Reason": "REBALANCE",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "SELL",
+          "Ticker": "TSCO",
+          "Shares": 2.213594,
+          "Price": 37.834999084472656,
+          "TradeValue": 83.75132696339416,
+          "Commission": 0.35,
+          "TransactionTaxes": 0.16750265392678834,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.0017252773354459196,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.0008810104120000001,
+          "TotalFees": 0.5201089416742342,
+          "RealizedPnL": -1.1111432008676547,
+          "ReturnPct": -1.3174200778363807,
+          "Reason": "REBALANCE",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "SELL",
+          "Ticker": "MTD",
+          "Shares": 0.003828,
+          "Price": 1723.72998046875,
+          "TradeValue": 6.598438365234375,
+          "Commission": 0.06598438365234376,
+          "TransactionTaxes": 0.01319687673046875,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.00013592783032382813,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 1.5235439999999998e-06,
+          "TotalFees": 0.07931871175713634,
+          "RealizedPnL": -0.21226042633599349,
+          "ReturnPct": -3.1532973003937528,
+          "Reason": "REBALANCE",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "BUY",
+          "Ticker": "DLTR",
+          "Shares": 0.586204,
+          "Price": 149.99000549316406,
+          "TradeValue": 87.92474118011474,
+          "Commission": 0.35,
+          "TransactionTaxes": 0.0,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.0,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.000118999412,
+          "TotalFees": 0.350118999412,
+          "RealizedPnL": 0.0,
+          "ReturnPct": 0.0,
+          "Reason": "ENTRY",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "BUY",
+          "Ticker": "CDW",
+          "Shares": 0.502042,
+          "Price": 169.94000244140625,
+          "TradeValue": 85.31701870568847,
+          "Commission": 0.35,
+          "TransactionTaxes": 0.0,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.0,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 0.000101914526,
+          "TotalFees": 0.350101914526,
+          "RealizedPnL": 0.0,
+          "ReturnPct": 0.0,
+          "Reason": "ENTRY",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "BUY",
+          "Ticker": "GILD",
+          "Shares": 0.469308,
+          "Price": 171.75999450683594,
+          "TradeValue": 80.60833950201416,
+          "Commission": 0.35,
+          "TransactionTaxes": 0.0,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.0,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 9.5269524e-05,
+          "TotalFees": 0.350095269524,
+          "RealizedPnL": 0.0,
+          "ReturnPct": 0.0,
+          "Reason": "ENTRY",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "US",
+          "Currency": "USD"
+        },
+        {
+          "Date": "2026-11-24 00:00:00",
+          "Action": "BUY",
+          "Ticker": "BIIB",
+          "Shares": 0.29578,
+          "Price": 259.8299865722656,
+          "TradeValue": 76.85251342834472,
+          "Commission": 0.35,
+          "TransactionTaxes": 0.0,
+          "ExchangeFees": 0.0,
+          "RegulatoryFees": 0.0,
+          "StampTaxes": 0.0,
+          "VAT_GST": 0.0,
+          "OtherFees": 6.004334e-05,
+          "TotalFees": 0.35006004333999996,
           "RealizedPnL": 0.0,
           "ReturnPct": 0.0,
           "Reason": "ENTRY",
@@ -6692,6 +7133,31 @@
           },
           "benchmark_ticker": "^GSPC",
           "benchmark_value": 7236.85009765625
+        },
+        {
+          "timestamp": "2026-11-24T09:44:49-05:00",
+          "portfolio_value": 419.91836711550843,
+          "pnl": -80.08163288449157,
+          "pnl_pct": -0.1601632657689831,
+          "cash": 0.0002562519525497464,
+          "unrealized_pnl": 4.978290277442628,
+          "realized_pnl": -75.93470829453787,
+          "holdings": 7,
+          "prices": {
+            "CRL": 340.1000061035156,
+            "SWK": 109.33499908447266,
+            "MTD": 1753.9649658203125,
+            "GEHC": 82.37000274658203,
+            "TSCO": 38.470001220703125,
+            "STE": 259.30999755859375,
+            "ABNB": 175.5399932861328,
+            "DLTR": 153.7100067138672,
+            "CDW": 168.4499969482422,
+            "GILD": 175.57000732421875,
+            "BIIB": 266.5
+          },
+          "benchmark_ticker": "^GSPC",
+          "benchmark_value": 7195.919921875
         }
       ],
       "last_prices": {
@@ -6700,7 +7166,7 @@
         "ABBV": 286.92999267578125,
         "IT": 220.5749969482422,
         "CNC": 67.78500366210938,
-        "CRL": 338.2799987792969,
+        "CRL": 340.1000061035156,
         "ADP": 287.6000061035156,
         "PTC": 195.8699951171875,
         "RVTY": 161.05999755859375,
@@ -6708,16 +7174,20 @@
         "WST": 412.5199890136719,
         "ALLE": 188.8350067138672,
         "LLY": 1420.4949951171875,
-        "SWK": 110.70999908447266,
-        "MTD": 1725.31494140625,
+        "SWK": 109.33499908447266,
+        "MTD": 1753.9649658203125,
         "BBY": 99.88999938964844,
         "CAH": 271.7099914550781,
-        "GEHC": 81.30999755859375,
-        "TSCO": 37.54999923706055,
-        "STE": 256.739990234375,
-        "ABNB": 174.0800018310547
+        "GEHC": 82.37000274658203,
+        "TSCO": 38.470001220703125,
+        "STE": 259.30999755859375,
+        "ABNB": 175.5399932861328,
+        "DLTR": 153.7100067138672,
+        "CDW": 168.4499969482422,
+        "GILD": 175.57000732421875,
+        "BIIB": 266.5
       },
-      "last_processed_rebalance_date": "2026-11-19",
+      "last_processed_rebalance_date": "2026-11-24",
       "started_at": "2026-10-21T16:03:49+00:00",
       "monthly_volume": [
         {
@@ -6728,20 +7198,20 @@
         {
           "year": 2026,
           "month": 11,
-          "volume": 12.400948
+          "volume": 18.286769
         }
       ],
-      "next_rebalance_date": "2026-11-24",
+      "next_rebalance_date": "2026-11-30",
       "selected_tickers": [
+        "DLTR",
+        "CDW",
         "MTD",
-        "GEHC",
-        "TSCO",
-        "STE",
-        "ABNB"
+        "GILD",
+        "BIIB"
       ],
-      "selected_at": "2026-11-19",
-      "realized_pnl_cumulative": -64.77618419582906,
-      "last_updated_at": "2026-11-23T23:02:09-05:00",
+      "selected_at": "2026-11-24",
+      "realized_pnl_cumulative": -75.93470829453787,
+      "last_updated_at": "2026-11-24T09:44:49-05:00",
       "regime_metrics": null
     },
     "142cf22662ca": {
@@ -7659,6 +8129,25 @@
           },
           "benchmark_ticker": "^CRSLDX",
           "benchmark_value": 23746.94921875
+        },
+        {
+          "timestamp": "2026-11-24T20:14:49+05:30",
+          "portfolio_value": 97226.52840059702,
+          "pnl": -2773.471599402983,
+          "pnl_pct": -0.02773471599402988,
+          "cash": 4202.629230675135,
+          "unrealized_pnl": 131.0986328125,
+          "realized_pnl": -2677.6968456889763,
+          "holdings": 5,
+          "prices": {
+            "ATHERENERG.NS": 1979.199951171875,
+            "KALYANKJIL.NS": 652.9000244140625,
+            "PVRINOX.NS": 1699.699951171875,
+            "PNB.NS": 149.75,
+            "GLAND.NS": 3297.39990234375
+          },
+          "benchmark_ticker": "^CRSLDX",
+          "benchmark_value": 23746.94921875
         }
       ],
       "last_prices": {
@@ -7699,7 +8188,7 @@
       ],
       "selected_at": "2026-11-17",
       "realized_pnl_cumulative": -2677.6968456889763,
-      "last_updated_at": "2026-11-24T09:32:09+05:30",
+      "last_updated_at": "2026-11-24T20:14:49+05:30",
       "regime_metrics": {
         "enabled": true,
         "current_regime": "Bull",
@@ -8773,6 +9262,25 @@
           },
           "benchmark_ticker": "^CRSLDX",
           "benchmark_value": 23746.94921875
+        },
+        {
+          "timestamp": "2026-11-24T20:14:49+05:30",
+          "portfolio_value": 96755.07154813933,
+          "pnl": -3244.928451860673,
+          "pnl_pct": -0.032449284518606736,
+          "cash": 2060.973525678386,
+          "unrealized_pnl": 1435.7467346191406,
+          "realized_pnl": -4395.206935910763,
+          "holdings": 5,
+          "prices": {
+            "ATHERENERG.NS": 1979.199951171875,
+            "PVRINOX.NS": 1699.699951171875,
+            "PNB.NS": 149.75,
+            "ASAHIINDIA.NS": 1170.0999755859375,
+            "ABDL.NS": 802.8499755859375
+          },
+          "benchmark_ticker": "^CRSLDX",
+          "benchmark_value": 23746.94921875
         }
       ],
       "last_prices": {
@@ -8815,7 +9323,7 @@
       ],
       "selected_at": "2026-11-20",
       "realized_pnl_cumulative": -4395.206935910763,
-      "last_updated_at": "2026-11-24T09:32:09+05:30",
+      "last_updated_at": "2026-11-24T20:14:49+05:30",
       "regime_metrics": {
         "enabled": true,
         "current_regime": "Bull",
@@ -8846,5 +9354,5 @@
       }
     }
   },
-  "last_updated_at": "2026-11-24T04:02:09+00:00"
+  "last_updated_at": "2026-11-24T14:44:49+00:00"
 }
