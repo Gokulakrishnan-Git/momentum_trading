@@ -3827,6 +3827,25 @@
           },
           "benchmark_ticker": "^GSPC",
           "benchmark_value": 7195.919921875
+        },
+        {
+          "timestamp": "2026-11-25T02:29:53-05:00",
+          "portfolio_value": 862716.2208816129,
+          "pnl": -137283.77911838714,
+          "pnl_pct": -0.13728377911838718,
+          "cash": 43.50550380523782,
+          "unrealized_pnl": 6753.192897949226,
+          "realized_pnl": -143907.21286933636,
+          "holdings": 5,
+          "prices": {
+            "MTD": 1705.0,
+            "DLTR": 154.66000366210938,
+            "CDW": 164.25999450683594,
+            "GILD": 178.2899932861328,
+            "BIIB": 269.2699890136719
+          },
+          "benchmark_ticker": "^GSPC",
+          "benchmark_value": 7202.4501953125
         }
       ],
       "last_prices": {
@@ -3848,17 +3867,17 @@
         "ALLE": 188.8350067138672,
         "LLY": 1420.1600341796875,
         "SWK": 108.52999877929688,
-        "MTD": 1750.6300048828125,
+        "MTD": 1705.0,
         "BBY": 99.94999694824219,
         "CAH": 271.7099914550781,
         "GEHC": 82.37000274658203,
         "TSCO": 38.459999084472656,
         "STE": 259.30999755859375,
         "ABNB": 175.85000610351562,
-        "DLTR": 153.43499755859375,
-        "CDW": 168.4499969482422,
-        "GILD": 175.4199981689453,
-        "BIIB": 266.5
+        "DLTR": 154.66000366210938,
+        "CDW": 164.25999450683594,
+        "GILD": 178.2899932861328,
+        "BIIB": 269.2699890136719
       },
       "last_processed_rebalance_date": "2026-11-24",
       "started_at": "2026-10-19T14:13:08+00:00",
@@ -3884,7 +3903,7 @@
       ],
       "selected_at": "2026-11-24",
       "realized_pnl_cumulative": -143907.21286933636,
-      "last_updated_at": "2026-11-24T09:44:49-05:00",
+      "last_updated_at": "2026-11-25T02:29:53-05:00",
       "regime_metrics": null
     },
     "14fc19b254e4": {
@@ -7158,6 +7177,27 @@
           },
           "benchmark_ticker": "^GSPC",
           "benchmark_value": 7195.919921875
+        },
+        {
+          "timestamp": "2026-11-25T02:29:53-05:00",
+          "portfolio_value": 418.12190272048895,
+          "pnl": -81.87809727951105,
+          "pnl_pct": -0.16375619455902213,
+          "cash": 0.0002562519525497464,
+          "unrealized_pnl": 3.1818258824230976,
+          "realized_pnl": -75.93470829453787,
+          "holdings": 7,
+          "prices": {
+            "CRL": 336.05999755859375,
+            "SWK": 109.26000213623047,
+            "MTD": 1705.0,
+            "DLTR": 154.66000366210938,
+            "CDW": 164.25999450683594,
+            "GILD": 178.2899932861328,
+            "BIIB": 269.2699890136719
+          },
+          "benchmark_ticker": "^GSPC",
+          "benchmark_value": 7202.4501953125
         }
       ],
       "last_prices": {
@@ -7166,7 +7206,7 @@
         "ABBV": 286.92999267578125,
         "IT": 220.5749969482422,
         "CNC": 67.78500366210938,
-        "CRL": 340.1000061035156,
+        "CRL": 336.05999755859375,
         "ADP": 287.6000061035156,
         "PTC": 195.8699951171875,
         "RVTY": 161.05999755859375,
@@ -7174,18 +7214,18 @@
         "WST": 412.5199890136719,
         "ALLE": 188.8350067138672,
         "LLY": 1420.4949951171875,
-        "SWK": 109.33499908447266,
-        "MTD": 1753.9649658203125,
+        "SWK": 109.26000213623047,
+        "MTD": 1705.0,
         "BBY": 99.88999938964844,
         "CAH": 271.7099914550781,
         "GEHC": 82.37000274658203,
         "TSCO": 38.470001220703125,
         "STE": 259.30999755859375,
         "ABNB": 175.5399932861328,
-        "DLTR": 153.7100067138672,
-        "CDW": 168.4499969482422,
-        "GILD": 175.57000732421875,
-        "BIIB": 266.5
+        "DLTR": 154.66000366210938,
+        "CDW": 164.25999450683594,
+        "GILD": 178.2899932861328,
+        "BIIB": 269.2699890136719
       },
       "last_processed_rebalance_date": "2026-11-24",
       "started_at": "2026-10-21T16:03:49+00:00",
@@ -7211,21 +7251,16 @@
       ],
       "selected_at": "2026-11-24",
       "realized_pnl_cumulative": -75.93470829453787,
-      "last_updated_at": "2026-11-24T09:44:49-05:00",
+      "last_updated_at": "2026-11-25T02:29:53-05:00",
       "regime_metrics": null
     },
     "142cf22662ca": {
-      "cash": 4202.629230675135,
+      "cash": 9365.43108159534,
       "initial_capital": 100000.0,
       "positions": {
         "ATHERENERG.NS": {
           "shares": 10,
           "entry_price": 1946.0,
-          "buy_date": "2026-11-16"
-        },
-        "KALYANKJIL.NS": {
-          "shares": 28,
-          "entry_price": 694.0,
           "buy_date": "2026-11-16"
         },
         "PVRINOX.NS": {
@@ -7234,14 +7269,19 @@
           "buy_date": "2026-11-17"
         },
         "PNB.NS": {
-          "shares": 132,
+          "shares": 129,
           "entry_price": 144.85000610351562,
           "buy_date": "2026-11-17"
         },
-        "GLAND.NS": {
-          "shares": 5,
-          "entry_price": 3380.0,
-          "buy_date": "2026-11-17"
+        "WELSPUNLIV.NS": {
+          "shares": 71,
+          "entry_price": 272.95001220703125,
+          "buy_date": "2026-11-25"
+        },
+        "DIVISLAB.NS": {
+          "shares": 1,
+          "entry_price": 11310.0,
+          "buy_date": "2026-11-25"
         }
       },
       "trades": [
@@ -7490,6 +7530,121 @@
           "VAT_GST": 1.176428358,
           "OtherFees": 1.69e-05,
           "TotalFees": 27.147158357999995,
+          "RealizedPnL": 0.0,
+          "ReturnPct": 0.0,
+          "Reason": "ENTRY",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "INDIA",
+          "Currency": "INR"
+        },
+        {
+          "Date": "2026-11-25 00:00:00",
+          "Action": "SELL",
+          "Ticker": "KALYANKJIL.NS",
+          "Shares": 28,
+          "Price": 661.2000122070312,
+          "TradeValue": 18513.600341796875,
+          "Commission": 6.0,
+          "TransactionTaxes": 18.513600341796874,
+          "ExchangeFees": 0.5683490168928222,
+          "RegulatoryFees": 0.018513600341796874,
+          "StampTaxes": 0.0,
+          "VAT_GST": 1.1856352711022315,
+          "OtherFees": 1.8513600341796875e-05,
+          "TotalFees": 26.286116743734066,
+          "RealizedPnL": -944.685774946859,
+          "ReturnPct": -4.861495342460164,
+          "Reason": "REBALANCE",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "INDIA",
+          "Currency": "INR"
+        },
+        {
+          "Date": "2026-11-25 00:00:00",
+          "Action": "SELL",
+          "Ticker": "PNB.NS",
+          "Shares": 3,
+          "Price": 150.60000610351562,
+          "TradeValue": 451.8000183105469,
+          "Commission": 6.0,
+          "TransactionTaxes": 0.4518000183105469,
+          "ExchangeFees": 0.013869808762115477,
+          "RegulatoryFees": 0.00045180001831054685,
+          "StampTaxes": 0.0,
+          "VAT_GST": 1.0825778895804765,
+          "OtherFees": 4.518000183105469e-07,
+          "TotalFees": 7.548699968471468,
+          "RealizedPnL": 9.701300031528532,
+          "ReturnPct": 2.232493297145737,
+          "Reason": "REBALANCE",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "INDIA",
+          "Currency": "INR"
+        },
+        {
+          "Date": "2026-11-25 00:00:00",
+          "Action": "SELL",
+          "Ticker": "GLAND.NS",
+          "Shares": 5,
+          "Price": 3399.199951171875,
+          "TradeValue": 16995.999755859375,
+          "Commission": 6.0,
+          "TransactionTaxes": 16.995999755859376,
+          "ExchangeFees": 0.521760196505127,
+          "RegulatoryFees": 0.016995999755859373,
+          "StampTaxes": 0.0,
+          "VAT_GST": 1.1769761153269775,
+          "OtherFees": 1.6995999755859376e-05,
+          "TotalFees": 24.711749063447094,
+          "RealizedPnL": 71.28800679592791,
+          "ReturnPct": 0.4218225254196918,
+          "Reason": "REBALANCE",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "INDIA",
+          "Currency": "INR"
+        },
+        {
+          "Date": "2026-11-25 00:00:00",
+          "Action": "BUY",
+          "Ticker": "WELSPUNLIV.NS",
+          "Shares": 71,
+          "Price": 272.95001220703125,
+          "TradeValue": 19379.45086669922,
+          "Commission": 6.0,
+          "TransactionTaxes": 19.37945086669922,
+          "ExchangeFees": 0.5949297621567993,
+          "RegulatoryFees": 0.01937945086669922,
+          "StampTaxes": 2.9069176300048825,
+          "VAT_GST": 1.1905756583442297,
+          "OtherFees": 1.937945086669922e-05,
+          "TotalFees": 30.091272747522698,
+          "RealizedPnL": 0.0,
+          "ReturnPct": 0.0,
+          "Reason": "ENTRY",
+          "SimulatedLatencySeconds": 1.0,
+          "SimulatedSlippageBps": 5.0,
+          "Market": "INDIA",
+          "Currency": "INR"
+        },
+        {
+          "Date": "2026-11-25 00:00:00",
+          "Action": "BUY",
+          "Ticker": "DIVISLAB.NS",
+          "Shares": 1,
+          "Price": 11310.0,
+          "TradeValue": 11310.0,
+          "Commission": 6.0,
+          "TransactionTaxes": 11.31,
+          "ExchangeFees": 0.34720569,
+          "RegulatoryFees": 0.011309999999999999,
+          "StampTaxes": 1.6965,
+          "VAT_GST": 1.1445328242,
+          "OtherFees": 1.131e-05,
+          "TotalFees": 20.5095598242,
           "RealizedPnL": 0.0,
           "ReturnPct": 0.0,
           "Reason": "ENTRY",
@@ -8148,63 +8303,75 @@
           },
           "benchmark_ticker": "^CRSLDX",
           "benchmark_value": 23746.94921875
+        },
+        {
+          "timestamp": "2026-11-25T12:59:53+05:30",
+          "portfolio_value": 96865.69095403186,
+          "pnl": -3134.3090459681407,
+          "pnl_pct": -0.03134309045968142,
+          "cash": 9365.43108159534,
+          "unrealized_pnl": 684.5584869384766,
+          "realized_pnl": -3541.393313808379,
+          "holdings": 5,
+          "prices": {
+            "ATHERENERG.NS": 1886.9000244140625,
+            "KALYANKJIL.NS": 626.4500122070312,
+            "PVRINOX.NS": 1691.699951171875,
+            "PNB.NS": 146.86000061035156,
+            "GLAND.NS": 3337.10009765625,
+            "WELSPUNLIV.NS": 275.7200012207031,
+            "DIVISLAB.NS": 11501.5
+          },
+          "benchmark_ticker": "^CRSLDX",
+          "benchmark_value": 23938.0
         }
       ],
       "last_prices": {
-        "PVRINOX.NS": 1699.699951171875,
+        "PVRINOX.NS": 1691.699951171875,
         "CYIENT.NS": 1230.0999755859375,
         "HEXT.NS": 578.4500122070312,
         "CHENNPETRO.NS": 1504.5,
         "FSL.NS": 292.54998779296875,
         "LAURUSLABS.NS": 2372.5,
-        "ATHERENERG.NS": 1979.199951171875,
+        "ATHERENERG.NS": 1886.9000244140625,
         "ACUTAAS.NS": 3977.300048828125,
         "COFORGE.NS": 2106.5,
-        "DIVISLAB.NS": 11111.5,
+        "DIVISLAB.NS": 11501.5,
         "SHYAMMETL.NS": 1312.300048828125,
-        "WELSPUNLIV.NS": 250.6999969482422,
-        "KALYANKJIL.NS": 652.9000244140625,
+        "WELSPUNLIV.NS": 275.7200012207031,
+        "KALYANKJIL.NS": 626.4500122070312,
         "SAILIFE.NS": 1773.0,
         "CUPID.NS": 366.1000061035156,
-        "PNB.NS": 149.75,
-        "GLAND.NS": 3297.39990234375
+        "PNB.NS": 146.86000061035156,
+        "GLAND.NS": 3337.10009765625
       },
-      "last_processed_rebalance_date": "2026-11-17",
+      "last_processed_rebalance_date": "2026-11-25",
       "started_at": "2026-10-26T04:06:59+00:00",
       "monthly_volume": [
         {
           "year": 2026,
           "month": 11,
-          "volume": 191232.00134277344
+          "volume": 257882.85232543945
         }
       ],
-      "next_rebalance_date": "2026-11-25",
+      "next_rebalance_date": "2026-12-02",
       "selected_tickers": [
         "ATHERENERG.NS",
-        "KALYANKJIL.NS",
         "PVRINOX.NS",
         "PNB.NS",
-        "GLAND.NS"
+        "WELSPUNLIV.NS",
+        "DIVISLAB.NS"
       ],
-      "selected_at": "2026-11-17",
-      "realized_pnl_cumulative": -2677.6968456889763,
-      "last_updated_at": "2026-11-24T20:14:49+05:30",
+      "selected_at": "2026-11-25",
+      "realized_pnl_cumulative": -3541.393313808379,
+      "last_updated_at": "2026-11-25T12:59:53+05:30",
       "regime_metrics": {
         "enabled": true,
         "current_regime": "Bull",
-        "smoothed_normalized_macd": 0.014341505418178024,
-        "smoothed_rsi": 69.47806800869162,
-        "data_date": "2026-11-20",
+        "smoothed_normalized_macd": 0.015116090134403055,
+        "smoothed_rsi": 67.33299064612284,
+        "data_date": "2026-11-23",
         "recent_sessions": [
-          {
-            "date": "2026-11-19",
-            "smoothed_normalized_macd": 0.013262896819804408,
-            "smoothed_rsi": 68.98554513494418,
-            "macd_meets_bull": true,
-            "rsi_meets_bull": true,
-            "bull_signal": true,
-            "confirmed_regime": "Bull"
-          },
           {
             "date": "2026-11-20",
             "smoothed_normalized_macd": 0.014341505418178024,
@@ -8213,9 +8380,18 @@
             "rsi_meets_bull": true,
             "bull_signal": true,
             "confirmed_regime": "Bull"
+          },
+          {
+            "date": "2026-11-23",
+            "smoothed_normalized_macd": 0.015116090134403055,
+            "smoothed_rsi": 67.33299064612284,
+            "macd_meets_bull": true,
+            "rsi_meets_bull": true,
+            "bull_signal": true,
+            "confirmed_regime": "Bull"
           }
         ],
-        "updated_at": "2026-11-23T06:19:09+00:00"
+        "updated_at": "2026-11-25T07:29:53+00:00"
       }
     },
     "7ef56d53b234": {
@@ -9281,16 +9457,35 @@
           },
           "benchmark_ticker": "^CRSLDX",
           "benchmark_value": 23746.94921875
+        },
+        {
+          "timestamp": "2026-11-25T12:59:53+05:30",
+          "portfolio_value": 95786.58419767546,
+          "pnl": -4213.41580232454,
+          "pnl_pct": -0.04213415802324538,
+          "cash": 2060.973525678386,
+          "unrealized_pnl": 467.25938415527344,
+          "realized_pnl": -4395.206935910763,
+          "holdings": 5,
+          "prices": {
+            "ATHERENERG.NS": 1887.199951171875,
+            "PVRINOX.NS": 1691.800048828125,
+            "PNB.NS": 146.8300018310547,
+            "ASAHIINDIA.NS": 1185.4000244140625,
+            "ABDL.NS": 810.0
+          },
+          "benchmark_ticker": "^CRSLDX",
+          "benchmark_value": 23938.849609375
         }
       ],
       "last_prices": {
-        "PVRINOX.NS": 1699.699951171875,
+        "PVRINOX.NS": 1691.800048828125,
         "CYIENT.NS": 1230.0999755859375,
         "HEXT.NS": 578.4500122070312,
         "CHENNPETRO.NS": 1504.699951171875,
         "FSL.NS": 292.54998779296875,
         "LAURUSLABS.NS": 2417.0,
-        "ATHERENERG.NS": 1979.199951171875,
+        "ATHERENERG.NS": 1887.199951171875,
         "COFORGE.NS": 2058.800048828125,
         "ACUTAAS.NS": 3976.0,
         "CUPID.NS": 366.0,
@@ -9299,10 +9494,10 @@
         "SAILIFE.NS": 1773.4000244140625,
         "DIVISLAB.NS": 11112.5,
         "KALYANKJIL.NS": 618.2999877929688,
-        "PNB.NS": 149.75,
+        "PNB.NS": 146.8300018310547,
         "GLAND.NS": 3328.0,
-        "ASAHIINDIA.NS": 1170.0999755859375,
-        "ABDL.NS": 802.8499755859375
+        "ASAHIINDIA.NS": 1185.4000244140625,
+        "ABDL.NS": 810.0
       },
       "last_processed_rebalance_date": "2026-11-20",
       "started_at": "2026-10-26T04:06:59+00:00",
@@ -9323,23 +9518,14 @@
       ],
       "selected_at": "2026-11-20",
       "realized_pnl_cumulative": -4395.206935910763,
-      "last_updated_at": "2026-11-24T20:14:49+05:30",
+      "last_updated_at": "2026-11-25T12:59:53+05:30",
       "regime_metrics": {
         "enabled": true,
         "current_regime": "Bull",
-        "smoothed_normalized_macd": 0.014341505418178024,
-        "smoothed_rsi": 69.47806800869162,
-        "data_date": "2026-11-20",
+        "smoothed_normalized_macd": 0.015116090134403055,
+        "smoothed_rsi": 67.33299064612284,
+        "data_date": "2026-11-23",
         "recent_sessions": [
-          {
-            "date": "2026-11-19",
-            "smoothed_normalized_macd": 0.013262896819804408,
-            "smoothed_rsi": 68.98554513494418,
-            "macd_meets_bull": true,
-            "rsi_meets_bull": true,
-            "bull_signal": true,
-            "confirmed_regime": "Bull"
-          },
           {
             "date": "2026-11-20",
             "smoothed_normalized_macd": 0.014341505418178024,
@@ -9348,11 +9534,20 @@
             "rsi_meets_bull": true,
             "bull_signal": true,
             "confirmed_regime": "Bull"
+          },
+          {
+            "date": "2026-11-23",
+            "smoothed_normalized_macd": 0.015116090134403055,
+            "smoothed_rsi": 67.33299064612284,
+            "macd_meets_bull": true,
+            "rsi_meets_bull": true,
+            "bull_signal": true,
+            "confirmed_regime": "Bull"
           }
         ],
-        "updated_at": "2026-11-23T06:19:09+00:00"
+        "updated_at": "2026-11-25T07:29:53+00:00"
       }
     }
   },
-  "last_updated_at": "2026-11-24T14:44:49+00:00"
+  "last_updated_at": "2026-11-25T07:29:53+00:00"
 }
