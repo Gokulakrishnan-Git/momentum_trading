@@ -3903,6 +3903,25 @@
           },
           "benchmark_ticker": "^GSPC",
           "benchmark_value": 7182.72998046875
+        },
+        {
+          "timestamp": "2026-11-26T14:31:15-05:00",
+          "portfolio_value": 860175.6126662808,
+          "pnl": -139824.38733371918,
+          "pnl_pct": -0.13982438733371916,
+          "cash": 43.50550380523782,
+          "unrealized_pnl": 4212.584682617195,
+          "realized_pnl": -143907.21286933636,
+          "holdings": 5,
+          "prices": {
+            "MTD": 1663.0799560546875,
+            "DLTR": 152.16099548339844,
+            "CDW": 175.00999450683594,
+            "GILD": 176.75,
+            "BIIB": 261.3299865722656
+          },
+          "benchmark_ticker": "^GSPC",
+          "benchmark_value": 7182.72998046875
         }
       ],
       "last_prices": {
@@ -3960,7 +3979,7 @@
       ],
       "selected_at": "2026-11-24",
       "realized_pnl_cumulative": -143907.21286933636,
-      "last_updated_at": "2026-11-26T05:04:19-05:00",
+      "last_updated_at": "2026-11-26T14:31:15-05:00",
       "regime_metrics": null
     },
     "14fc19b254e4": {
@@ -7318,6 +7337,27 @@
           },
           "benchmark_ticker": "^GSPC",
           "benchmark_value": 7182.72998046875
+        },
+        {
+          "timestamp": "2026-11-26T14:31:15-05:00",
+          "portfolio_value": 416.974562753692,
+          "pnl": -83.025437246308,
+          "pnl_pct": -0.16605087449261602,
+          "cash": 0.0002562519525497464,
+          "unrealized_pnl": 2.034485915626222,
+          "realized_pnl": -75.93470829453787,
+          "holdings": 7,
+          "prices": {
+            "CRL": 332.1700134277344,
+            "SWK": 109.22000122070312,
+            "MTD": 1663.0799560546875,
+            "DLTR": 152.16099548339844,
+            "CDW": 175.00999450683594,
+            "GILD": 176.75,
+            "BIIB": 261.3299865722656
+          },
+          "benchmark_ticker": "^GSPC",
+          "benchmark_value": 7182.72998046875
         }
       ],
       "last_prices": {
@@ -7371,7 +7411,7 @@
       ],
       "selected_at": "2026-11-24",
       "realized_pnl_cumulative": -75.93470829453787,
-      "last_updated_at": "2026-11-26T05:04:19-05:00",
+      "last_updated_at": "2026-11-26T14:31:15-05:00",
       "regime_metrics": null
     },
     "142cf22662ca": {
@@ -8501,6 +8541,25 @@
           },
           "benchmark_ticker": "^CRSLDX",
           "benchmark_value": 24085.25
+        },
+        {
+          "timestamp": "2026-11-27T01:01:15+05:30",
+          "portfolio_value": 97071.33064824573,
+          "pnl": -2928.6693517542735,
+          "pnl_pct": -0.02928669351754276,
+          "cash": 9365.43108159534,
+          "unrealized_pnl": 890.1981811523438,
+          "realized_pnl": -3541.393313808379,
+          "holdings": 5,
+          "prices": {
+            "ATHERENERG.NS": 1906.0,
+            "PVRINOX.NS": 1650.0,
+            "PNB.NS": 147.5,
+            "WELSPUNLIV.NS": 279.3999938964844,
+            "DIVISLAB.NS": 11631.0
+          },
+          "benchmark_ticker": "^CRSLDX",
+          "benchmark_value": 24085.25
         }
       ],
       "last_prices": {
@@ -8510,16 +8569,16 @@
         "CHENNPETRO.NS": 1504.5,
         "FSL.NS": 292.54998779296875,
         "LAURUSLABS.NS": 2372.5,
-        "ATHERENERG.NS": 1909.0999755859375,
+        "ATHERENERG.NS": 1906.0,
         "ACUTAAS.NS": 3977.300048828125,
         "COFORGE.NS": 2106.5,
-        "DIVISLAB.NS": 11688.0,
+        "DIVISLAB.NS": 11631.0,
         "SHYAMMETL.NS": 1312.300048828125,
         "WELSPUNLIV.NS": 279.3999938964844,
         "KALYANKJIL.NS": 626.4500122070312,
         "SAILIFE.NS": 1773.0,
         "CUPID.NS": 366.1000061035156,
-        "PNB.NS": 147.61000061035156,
+        "PNB.NS": 147.5,
         "GLAND.NS": 3337.10009765625
       },
       "last_processed_rebalance_date": "2026-11-25",
@@ -8541,7 +8600,7 @@
       ],
       "selected_at": "2026-11-25",
       "realized_pnl_cumulative": -3541.393313808379,
-      "last_updated_at": "2026-11-26T15:34:19+05:30",
+      "last_updated_at": "2026-11-27T01:01:15+05:30",
       "regime_metrics": {
         "enabled": true,
         "current_regime": "Bull",
@@ -9710,6 +9769,25 @@
           },
           "benchmark_ticker": "^CRSLDX",
           "benchmark_value": 24085.25
+        },
+        {
+          "timestamp": "2026-11-27T01:01:15+05:30",
+          "portfolio_value": 95962.02369657683,
+          "pnl": -4037.976303423173,
+          "pnl_pct": -0.04037976303423174,
+          "cash": 2060.973525678386,
+          "unrealized_pnl": 642.6988830566406,
+          "realized_pnl": -4395.206935910763,
+          "holdings": 5,
+          "prices": {
+            "ATHERENERG.NS": 1906.0,
+            "PVRINOX.NS": 1650.0,
+            "PNB.NS": 147.5,
+            "ASAHIINDIA.NS": 1189.8499755859375,
+            "ABDL.NS": 822.6500244140625
+          },
+          "benchmark_ticker": "^CRSLDX",
+          "benchmark_value": 24085.25
         }
       ],
       "last_prices": {
@@ -9719,7 +9797,7 @@
         "CHENNPETRO.NS": 1504.699951171875,
         "FSL.NS": 292.54998779296875,
         "LAURUSLABS.NS": 2417.0,
-        "ATHERENERG.NS": 1909.0999755859375,
+        "ATHERENERG.NS": 1906.0,
         "COFORGE.NS": 2058.800048828125,
         "ACUTAAS.NS": 3976.0,
         "CUPID.NS": 366.0,
@@ -9728,9 +9806,9 @@
         "SAILIFE.NS": 1773.4000244140625,
         "DIVISLAB.NS": 11112.5,
         "KALYANKJIL.NS": 618.2999877929688,
-        "PNB.NS": 147.61000061035156,
+        "PNB.NS": 147.5,
         "GLAND.NS": 3328.0,
-        "ASAHIINDIA.NS": 1188.6500244140625,
+        "ASAHIINDIA.NS": 1189.8499755859375,
         "ABDL.NS": 822.6500244140625
       },
       "last_processed_rebalance_date": "2026-11-20",
@@ -9752,7 +9830,7 @@
       ],
       "selected_at": "2026-11-20",
       "realized_pnl_cumulative": -4395.206935910763,
-      "last_updated_at": "2026-11-26T15:34:19+05:30",
+      "last_updated_at": "2026-11-27T01:01:15+05:30",
       "regime_metrics": {
         "enabled": true,
         "current_regime": "Bull",
@@ -9783,5 +9861,5 @@
       }
     }
   },
-  "last_updated_at": "2026-11-26T10:04:19+00:00"
+  "last_updated_at": "2026-11-26T19:31:15+00:00"
 }
