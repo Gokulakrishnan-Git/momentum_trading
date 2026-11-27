@@ -3922,6 +3922,25 @@
           },
           "benchmark_ticker": "^GSPC",
           "benchmark_value": 7182.72998046875
+        },
+        {
+          "timestamp": "2026-11-26T21:22:17-05:00",
+          "portfolio_value": 860175.6126662808,
+          "pnl": -139824.38733371918,
+          "pnl_pct": -0.13982438733371916,
+          "cash": 43.50550380523782,
+          "unrealized_pnl": 4212.584682617195,
+          "realized_pnl": -143907.21286933636,
+          "holdings": 5,
+          "prices": {
+            "MTD": 1663.0799560546875,
+            "DLTR": 152.16099548339844,
+            "CDW": 175.00999450683594,
+            "GILD": 176.75,
+            "BIIB": 261.3299865722656
+          },
+          "benchmark_ticker": "^GSPC",
+          "benchmark_value": 7182.72998046875
         }
       ],
       "last_prices": {
@@ -3979,7 +3998,7 @@
       ],
       "selected_at": "2026-11-24",
       "realized_pnl_cumulative": -143907.21286933636,
-      "last_updated_at": "2026-11-26T14:31:15-05:00",
+      "last_updated_at": "2026-11-26T21:22:17-05:00",
       "regime_metrics": null
     },
     "14fc19b254e4": {
@@ -7358,6 +7377,27 @@
           },
           "benchmark_ticker": "^GSPC",
           "benchmark_value": 7182.72998046875
+        },
+        {
+          "timestamp": "2026-11-26T21:22:17-05:00",
+          "portfolio_value": 416.974562753692,
+          "pnl": -83.025437246308,
+          "pnl_pct": -0.16605087449261602,
+          "cash": 0.0002562519525497464,
+          "unrealized_pnl": 2.034485915626222,
+          "realized_pnl": -75.93470829453787,
+          "holdings": 7,
+          "prices": {
+            "CRL": 332.1700134277344,
+            "SWK": 109.22000122070312,
+            "MTD": 1663.0799560546875,
+            "DLTR": 152.16099548339844,
+            "CDW": 175.00999450683594,
+            "GILD": 176.75,
+            "BIIB": 261.3299865722656
+          },
+          "benchmark_ticker": "^GSPC",
+          "benchmark_value": 7182.72998046875
         }
       ],
       "last_prices": {
@@ -7411,7 +7451,7 @@
       ],
       "selected_at": "2026-11-24",
       "realized_pnl_cumulative": -75.93470829453787,
-      "last_updated_at": "2026-11-26T14:31:15-05:00",
+      "last_updated_at": "2026-11-26T21:22:17-05:00",
       "regime_metrics": null
     },
     "142cf22662ca": {
@@ -8560,6 +8600,25 @@
           },
           "benchmark_ticker": "^CRSLDX",
           "benchmark_value": 24085.25
+        },
+        {
+          "timestamp": "2026-11-27T07:52:17+05:30",
+          "portfolio_value": 97071.33064824573,
+          "pnl": -2928.6693517542735,
+          "pnl_pct": -0.02928669351754276,
+          "cash": 9365.43108159534,
+          "unrealized_pnl": 890.1981811523438,
+          "realized_pnl": -3541.393313808379,
+          "holdings": 5,
+          "prices": {
+            "ATHERENERG.NS": 1906.0,
+            "PVRINOX.NS": 1650.0,
+            "PNB.NS": 147.5,
+            "WELSPUNLIV.NS": 279.3999938964844,
+            "DIVISLAB.NS": 11631.0
+          },
+          "benchmark_ticker": "^CRSLDX",
+          "benchmark_value": 24085.25
         }
       ],
       "last_prices": {
@@ -8600,7 +8659,7 @@
       ],
       "selected_at": "2026-11-25",
       "realized_pnl_cumulative": -3541.393313808379,
-      "last_updated_at": "2026-11-27T01:01:15+05:30",
+      "last_updated_at": "2026-11-27T07:52:17+05:30",
       "regime_metrics": {
         "enabled": true,
         "current_regime": "Bull",
@@ -9788,6 +9847,25 @@
           },
           "benchmark_ticker": "^CRSLDX",
           "benchmark_value": 24085.25
+        },
+        {
+          "timestamp": "2026-11-27T07:52:17+05:30",
+          "portfolio_value": 95962.02369657683,
+          "pnl": -4037.976303423173,
+          "pnl_pct": -0.04037976303423174,
+          "cash": 2060.973525678386,
+          "unrealized_pnl": 642.6988830566406,
+          "realized_pnl": -4395.206935910763,
+          "holdings": 5,
+          "prices": {
+            "ATHERENERG.NS": 1906.0,
+            "PVRINOX.NS": 1650.0,
+            "PNB.NS": 147.5,
+            "ASAHIINDIA.NS": 1189.8499755859375,
+            "ABDL.NS": 822.6500244140625
+          },
+          "benchmark_ticker": "^CRSLDX",
+          "benchmark_value": 24085.25
         }
       ],
       "last_prices": {
@@ -9830,7 +9908,7 @@
       ],
       "selected_at": "2026-11-20",
       "realized_pnl_cumulative": -4395.206935910763,
-      "last_updated_at": "2026-11-27T01:01:15+05:30",
+      "last_updated_at": "2026-11-27T07:52:17+05:30",
       "regime_metrics": {
         "enabled": true,
         "current_regime": "Bull",
@@ -9861,5 +9939,5 @@
       }
     }
   },
-  "last_updated_at": "2026-11-26T19:31:15+00:00"
+  "last_updated_at": "2026-11-27T02:22:17+00:00"
 }
